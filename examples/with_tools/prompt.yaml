@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=../../prompt-schema.yaml.json
+
+name: Get Weather
+version: 1
+
+provider: openai
+model: gpt-4o-mini
+
+tools:
+  - name: get_current_weather
+    description: Gets info about the current weather at a given location.
+    parameters: |-
+      {
+          "name": "get_current_weather",
+          "description": "Get the current weather in a given location",
+          "parameters": {
+              "type": "object",
+              "properties": {
+                  "location": {
+                      "type": "string",
+                      "description": "The city and state, e.g. San Francisco, CA",
+                  },
+                  "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+              },
+              "required": ["location"],
+          },
+      }
+
+system_prompt: |-
+  Gets the weather for any given city in the US.
+
+  Calls an API for weather information.

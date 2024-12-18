@@ -2,8 +2,13 @@
   "name": "eval-anywhere",
   "version": "1.0.0",
   "description": "Everything you need to create prompts for LLMs that are consistent, reliable, and efficient and run anywhere.",
+  "bin": {
+    "eval-anywhere": "./dist/cli.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./scripts/build.sh",
+    "gen": "./scripts/gen.sh",
     "fmt": "prettier --write ."
   },
   "keywords": [
@@ -13,6 +18,19 @@
   "author": "sjones6",
   "license": "MIT",
   "devDependencies": {
-    "prettier": "^3.4.2"
+    "@tsconfig/node22": "^22.0.0",
+    "@types/node": "^22.10.2",
+    "json-refs": "^3.0.15",
+    "json-schema-to-zod": "^2.5.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@commander-js/extra-typings": "^12.1.0",
+    "commander": "^12.1.0",
+    "glob": "^11.0.0",
+    "yaml": "^2.6.1",
+    "zod": "^3.24.1"
   }
 }
