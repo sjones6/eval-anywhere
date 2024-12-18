@@ -6,7 +6,7 @@ Everything you need to create prompts for LLMs that are consistent, reliable, an
 
 ## Theory
 
-In order to construct prompts that are consistent, reliable, and efficient, one should not think of a *prompt* as simply a bit of text fed to an LLM in the system prompt, but rather comprised of a few parts:
+In order to construct prompts that are consistent, reliable, and efficient, one should not think of a _prompt_ as simply a bit of text fed to an LLM in the system prompt, but rather comprised of a few parts:
 
 - system prompt
 - few-shot examples
@@ -24,14 +24,14 @@ By constructing prompts in a language-agnostic way and then publishing them in t
 
 Eval Anywhere is comprised of a few pieces:
 
-* Schema for writing structured prompts in YAML [in progress]
-* Schema for structured prompt evals [in progress]
-* CLI for executing evals [in progress]
-* CLI for publishing prompts as language packages:
+- Schema for writing structured prompts in YAML [in progress]
+- Schema for structured prompt evals [in progress]
+- CLI for executing evals [in progress]
+- CLI for publishing prompts as language packages:
   - TypeScript [in progress]
   - Python [in progress]
   - Golang [in progress]
-* a framework for adding community language packages [in progress]
+- a framework for adding community language packages [in progress]
 
 ## Development
 
