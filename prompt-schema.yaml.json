@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sjones6/eval-anywhere/prompt-schema.yaml.json",
+  "title": "Eval Anywhere YAML Prompt JSON Schema",
+  "description": "A JSON schema for prompt.yaml files. See https://github.com/sjones6/eval-anywhere for more information",
+  "type": "object",
+  "$defs": {
+    "message": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["role", "content"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "const": "user",
+              "description": "The assumed role of the entity responsible for this message."
+            },
+            "content": {
+              "type": "string",
+              "description": "The content of the message."
+            },
+            "name": {
+              "type": "string",
+              "description": "A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["role", "content"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "const": "assistant",
+              "description": "The assumed role of the entity responsible for this message."
+            },
+            "tool_calls": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The ID of the function call"
+                  },
+                  "function": {
+                    "type": "object",
+                    "properties": {
+                      "arguments": {
+                        "type": "string",
+                        "description": "The stringified JSON arguments"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "The name of the function to call"
+                      }
+                    },
+                    "required": ["arguments", "name"]
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "function"
+                  }
+                },
+                "required": ["id", "function", "type"]
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["role", "content", "tool_call_id"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "const": "tool",
+              "description": "The assumed role of the entity responsible for this message."
+            },
+            "content": {
+              "type": "string",
+              "description": "The stringified JSON of the tool call response."
+            },
+            "tool_call_id": {
+              "type": "string",
+              "description": "The ID of the tool call. Must match an actual tool call."
+            }
+          }
+        }
+      ]
+    },
+    "tool": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the function."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the function."
+        },
+        "parameters": {
+          "type": "string",
+          "description": "A JSON schema definition of how the tool parameters should be constructed."
+        }
+      },
+      "required": ["name", "description", "parameters"]
+    }
+  },
+  "required": ["name", "system_prompt"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The name of the prompt. For output, this will be turned into camel case."
+    },
+    "provider": {
+      "type": "string",
+      "anyOf": [
+        {
+          "type": "string",
+          "description": "List of model providers",
+          "enum": [
+            "ai21",
+            "aleph_alpha",
+            "anthropic",
+            "anyscale",
+            "azure",
+            "azure_ai",
+            "bedrock",
+            "bedrock_converse",
+            "cerebras",
+            "cloudflare",
+            "codestral",
+            "cohere",
+            "cohere_chat",
+            "databricks",
+            "deepinfra",
+            "deepseek",
+            "fireworks_ai",
+            "fireworks_ai-embedding-models",
+            "friendliai",
+            "gemini",
+            "groq",
+            "mistral",
+            "nlp_cloud",
+            "ollama",
+            "one of https://docs.litellm.ai/docs/providers",
+            "openai",
+            "openrouter",
+            "palm",
+            "perplexity",
+            "replicate",
+            "sagemaker",
+            "text-completion-codestral",
+            "text-completion-openai",
+            "together_ai",
+            "vertex_ai-ai21_models",
+            "vertex_ai-anthropic_models",
+            "vertex_ai-chat-models",
+            "vertex_ai-code-chat-models",
+            "vertex_ai-code-text-models",
+            "vertex_ai-embedding-models",
+            "vertex_ai-image-models",
+            "vertex_ai-language-models",
+            "vertex_ai-llama_models",
+            "vertex_ai-mistral_models",
+            "vertex_ai-text-models",
+            "vertex_ai-vision-models",
+            "voyage",
+            "xai"
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The default model to use with this prompt. Ultimately, the target runtime will choose a supported prompt."
+    },
+    "few_shot_messages": {
+      "type": "array",
+      "description": "An array of few shot messages to include in the prompt.",
+      "items": {
+        "$ref": "#/$defs/message"
+      },
+      "minItems": 1
+    },
+    "final_messages": {
+      "type": "array",
+      "description": "An array of messages to include _after_ the users messages are inserted. These are helpful for providing guidance and guardrails as the final thing the model sees.",
+      "items": {
+        "$ref": "#/$defs/message"
+      },
+      "minItems": 1
+    },
+    "model": {
+      "type": "string",
+      "description": "The default model to use with this prompt. Ultimately, the runtime will choose a supported prompt."
+    },
+    "version": {
+      "type": "integer",
+      "description": "The version of the prompt.",
+      "minimum": 1,
+      "default": 1
+    },
+    "system_prompt": {
+      "type": "string",
+      "description": "The system prompt to use for the prompt."
+    },
+    "temperature": {
+      "type": "number",
+      "description": "A number between 0 and 2 that controls the randomness of the response. Lower numbers result in less random (although still random) responses.",
+      "minimum": 0,
+      "maximum": 2,
+      "default": 0
+    },
+    "tools": {
+      "type": "array",
+      "description": "A list of tools available to the prompt",
+      "items": {
+        "$ref": "#/$defs/tool"
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false
+}
