@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/sjones6/eval-anywhere/prompt-schema.yaml.json",
-  "title": "Eval Anywhere YAML Prompt JSON Schema",
+  "$id": "https://github.com/sjones6/eval-anywhere/schemas/prompt-schema.yaml.json",
+  "title": "Eval Anywhere Prompt",
   "description": "A JSON schema for prompt.yaml files. See https://github.com/sjones6/eval-anywhere for more information",
   "type": "object",
   "$defs": {
@@ -24,7 +24,8 @@
               "type": "string",
               "description": "A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send."
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "type": "object",
@@ -34,6 +35,10 @@
               "type": "string",
               "const": "assistant",
               "description": "The assumed role of the entity responsible for this message."
+            },
+            "content": {
+              "type": ["string", "null"],
+              "description": "The content of the message."
             },
             "tool_calls": {
               "type": "array",
@@ -57,17 +62,20 @@
                         "description": "The name of the function to call"
                       }
                     },
-                    "required": ["arguments", "name"]
+                    "required": ["arguments", "name"],
+                    "additionalProperties": false
                   },
                   "type": {
                     "type": "string",
                     "const": "function"
                   }
                 },
-                "required": ["id", "function", "type"]
+                "required": ["id", "function", "type"],
+                "additionalProperties": false
               }
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "type": "object",
@@ -86,7 +94,8 @@
               "type": "string",
               "description": "The ID of the tool call. Must match an actual tool call."
             }
-          }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -95,18 +104,19 @@
       "properties": {
         "name": {
           "type": "string",
-          "description": "The name of the function."
+          "description": "The name of the tool function. This should be descriptive as to what the tool does."
         },
         "description": {
           "type": "string",
-          "description": "The description of the function."
+          "description": "The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool."
         },
         "parameters": {
           "type": "string",
           "description": "A JSON schema definition of how the tool parameters should be constructed."
         }
       },
-      "required": ["name", "description", "parameters"]
+      "required": ["name", "description", "parameters"],
+      "additionalProperties": false
     }
   },
   "required": ["name", "system_prompt"],

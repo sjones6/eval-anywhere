@@ -8,6 +8,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "./scripts/build.sh",
+    "compile:examples": "./scripts/test_compile.sh",
     "gen": "./scripts/gen.sh",
     "fmt": "prettier --write ."
   },
@@ -21,6 +22,7 @@
     "@tsconfig/node22": "^22.0.0",
     "@types/node": "^22.10.2",
     "json-refs": "^3.0.15",
+    "json-schema-to-typescript": "^15.0.3",
     "json-schema-to-zod": "^2.5.0",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
