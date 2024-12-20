@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eou pipefail
+
 rm -rf ./src/gen/*
 
 mkdir -p ./src/gen
@@ -18,9 +20,19 @@ generate_zod_from_schema () {
   pascal_name=$(to_pascal_case "$name")
   json-refs resolve $1 \
     | json-schema-to-zod -n $name -m esm --type $pascal_name \
-    | prettier --parser typescript > ./src/gen/$name.ts
+    | prettier --parser typescript > ./cli/gen/$name.ts
 }
 
-generate_zod_from_schema prompt-schema.yaml.json prompt
+BANNER_COMMENT="/* eslint-disable */"
+
+generate_ts_from_jsonschema () {
+  cat "$1" | json2ts --bannerComment="$BANNER_COMMENT" --format=false --additionalProperties=false > "$2"
+}
+
+generate_zod_from_schema schemas/prompt-schema.yaml.json prompt
+
+generate_ts_from_jsonschema schemas/prompt-schema.yaml.json ./templates/typescript/types.ts
+
+pnpm fmt
 
 
