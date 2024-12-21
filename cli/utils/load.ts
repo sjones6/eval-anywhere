@@ -5,8 +5,8 @@ import fsp from "node:fs/promises";
 import z from "zod";
 
 import { parse } from "yaml";
-import { prompt, Prompt } from "../gen/prompt";
-import { evaluation, Evaluation } from "../gen/evaluation";
+import { prompt, Prompt } from "../schemas/prompt";
+import { evaluation, Evaluation } from "../schemas/evaluation";
 import { globSync } from "glob";
 
 export type PromptWithEvals = {
@@ -53,7 +53,7 @@ export const loadPromptsAndEvals = async ({
       throw new Error(`failed to parse prompt: ${file.fullpath()}`);
     }
 
-    const evalPath = ["eval.yaml", "eval.yml"]
+    const evalPath = ["eval.yaml", "eval.yml", "evals.yaml", "eval.yml"]
       .map((filename) => path.join(path.dirname(file.fullpath()), filename))
       .find((p) => fs.existsSync(p));
 

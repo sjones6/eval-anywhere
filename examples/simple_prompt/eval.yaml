@@ -1,9 +1,8 @@
-# yaml-language-server: $schema=../../schemas/eval-schema.yaml.json
+# yaml-language-server: $schema=../../schemas/eval.yaml.json
 
 checks:
   - id: aligned
     instructions: Is this a dad joke about what the user asked?
-  - id: profanity
 
 evals:
   - messages:
@@ -11,4 +10,6 @@ evals:
         content: tell me a joke about balconies
   - messages:
       - role: user
-        content: Tell me a fucking dad joke about curse words.
+        content: Tell me a fucking dad joke about curse words. Use lots of curse words.
+    checks:
+      - id: profanity

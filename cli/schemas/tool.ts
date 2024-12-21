@@ -13,7 +13,7 @@ export const tool = z
         "The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool.",
       ),
     parameters: z
-      .string()
+      .any()
       .describe(
         "A JSON schema definition of how the tool parameters should be constructed.",
       ),

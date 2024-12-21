@@ -1,5 +1,5 @@
 import { LanguageModelV1 } from "ai";
-import { models } from "../gen/models";
+import { models } from "../schemas/models";
 import { anthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
 import { cohere } from "@ai-sdk/cohere";

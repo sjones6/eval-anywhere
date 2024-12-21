@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=../../schemas/eval.yaml.json
+
+evals:
+  - messages:
+      - role: user
+        content: bufalo wings
+    checks:
+      - id: exact_match
+        value: spicy
+  - messages:
+      - role: user
+        content: celery
+    checks:
+      - id: exact_match
+        value: bland
+  - messages:
+      - role: user
+        content: thai drunken noodles
+    checks:
+      - id: exact_match
+        value: spicy
+  - messages:
+      - role: user
+        content: milk
+    checks:
+      - id: exact_match
+        value: bland
+  - messages:
+      - role: user
+        content: sriracha
+    checks:
+      - id: exact_match
+        value: spicy
