@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/sjones6/eval-anywhere/blob/main/schemas/common.json",
+  "$id": "https://raw.githubusercontent.com/sjones6/eval-anywhere/refs/heads/main/schemas/common.json",
   "type": "object",
   "additionalProperties": false,
   "$defs": {
