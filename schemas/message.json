@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/sjones6/eval-anywhere/refs/heads/main/schemas/message.json",
+  "$ref": "https://raw.githubusercontent.com/sjones6/eval-anywhere/refs/heads/main/schemas/common.json#/$defs/message"
+}

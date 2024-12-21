@@ -6,7 +6,6 @@
   "type": "object",
   "$defs": {
     "check": {
-      "type": "object",
       "description": "An eval check to perform on the response.",
       "anyOf": [
         {
@@ -15,8 +14,11 @@
           "required": ["id"],
           "properties": {
             "id": {
-              "type": "string",
               "constant": "profanity"
+            },
+            "model": {
+              "$ref": "https://raw.githubusercontent.com/sjones6/eval-anywhere/refs/heads/main/schemas/common.json#/$defs/model",
+              "description": "the model to use for this check. If not supplied, falls back to the model used for the prompt."
             },
             "forbidden": {
               "type": "array",
@@ -35,8 +37,11 @@
           "required": ["id", "instructions"],
           "properties": {
             "id": {
-              "type": "string",
               "constant": "aligned"
+            },
+            "model": {
+              "$ref": "https://raw.githubusercontent.com/sjones6/eval-anywhere/refs/heads/main/schemas/common.json#/$defs/model",
+              "description": "the model to use for this check. If not supplied, falls back to the model used for the prompt."
             },
             "instructions": {
               "type": "string",
@@ -51,7 +56,6 @@
           "required": ["id", "value"],
           "properties": {
             "id": {
-              "type": "string",
               "constant": "exact_match"
             },
             "value": {
@@ -74,6 +78,10 @@
             "id": {
               "type": "string",
               "description": "the ID of the custom check."
+            },
+            "model": {
+              "$ref": "https://raw.githubusercontent.com/sjones6/eval-anywhere/refs/heads/main/schemas/common.json#/$defs/model",
+              "description": "the model to use for this check. If not supplied, falls back to the model used for the prompt."
             }
           },
           "additionalProperties": true
@@ -109,6 +117,7 @@
       "description": "A list of evals to run",
       "items": {
         "type": "object",
+        "required": ["messages"],
         "properties": {
           "messages": {
             "type": "array",
