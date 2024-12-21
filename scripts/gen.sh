@@ -30,6 +30,7 @@ generate_ts_from_jsonschema () {
 }
 
 generate_zod_from_schema schemas/prompt-schema.yaml.json prompt
+generate_zod_from_schema schemas/eval-schema.yaml.json evaluation
 
 generate_ts_from_jsonschema schemas/prompt-schema.yaml.json ./templates/typescript/types.ts
 

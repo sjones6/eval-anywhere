@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/sjones6/eval-anywhere/blob/main/schemas/prompt-schema.yaml.json",
-  "title": "Eval Anywhere Prompt",
-  "description": "A JSON schema for prompt.yaml files. See https://github.com/sjones6/eval-anywhere for more information",
+  "$id": "https://github.com/sjones6/eval-anywhere/blob/main/schemas/eval-schema.yaml.json",
+  "title": "Eval Anywhere Eval",
+  "description": "A JSON schema for eval.yaml files. See https://github.com/sjones6/eval-anywhere for more information",
   "type": "object",
   "$defs": {
     "message": {
@@ -99,31 +99,80 @@
         }
       ]
     },
-    "tool": {
+    "check": {
       "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the tool function. This should be descriptive as to what the tool does."
+      "description": "An eval check to perform on the response.",
+      "anyOf": [
+        {
+          "type": "object",
+          "description": "Check if profanity is included.",
+          "required": ["id"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "constant": "profanity"
+            },
+            "forbidden": {
+              "type": "array",
+              "description": "a list of words or phrases that must not appear. Uses case-insensitive matching to determine if they're used. If omitted, a English language profanity check is performed.",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
         },
-        "description": {
-          "type": "string",
-          "description": "The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool."
+        {
+          "type": "object",
+          "description": "Check if returned value is roughtly aligned.",
+          "required": ["id", "instructions"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "constant": "aligned"
+            },
+            "instructions": {
+              "type": "string",
+              "description": "Instructions to give an LLM to determine if the task has been performed adequately."
+            }
+          },
+          "additionalProperties": false
         },
-        "parameters": {
-          "type": "string",
-          "description": "A JSON schema definition of how the tool parameters should be constructed."
+        {
+          "type": "object",
+          "description": "Check if returned value is an exact match.",
+          "required": ["id", "value"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "constant": "exact_match"
+            },
+            "value": {
+              "type": "string",
+              "description": "The exact match to check against."
+            },
+            "case_insensitive": {
+              "type": "boolean",
+              "default": false,
+              "description": "Whether to perform the match in a case insensitive way."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Check if returned value is an exact match.",
+          "required": ["id"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "the ID of the custom check."
+            }
+          },
+          "additionalProperties": true
         }
-      },
-      "required": ["name", "description", "parameters"],
-      "additionalProperties": false
-    }
-  },
-  "required": ["name", "system_prompt"],
-  "properties": {
-    "name": {
-      "type": "string",
-      "description": "The name of the prompt. For output, this will be turned into camel case."
+      ]
     },
     "model": {
       "type": "string",
@@ -221,45 +270,42 @@
         }
       ],
       "description": "The default model to use with this prompt. Ultimately, the target runtime will choose a supported prompt."
-    },
-    "few_shot_messages": {
+    }
+  },
+  "required": ["evals"],
+  "properties": {
+    "checks": {
       "type": "array",
-      "description": "An array of few shot messages to include in the prompt.",
+      "description": "a list of checks to perform on every eval",
       "items": {
-        "$ref": "#/$defs/message"
+        "$ref": "#/$defs/check"
       },
       "minItems": 1
     },
-    "final_messages": {
+    "evals": {
       "type": "array",
-      "description": "An array of messages to include _after_ the users messages are inserted. These are helpful for providing guidance and guardrails as the final thing the model sees.",
+      "description": "A list of evals to run",
       "items": {
-        "$ref": "#/$defs/message"
-      },
-      "minItems": 1
-    },
-    "version": {
-      "type": "integer",
-      "description": "The version of the prompt.",
-      "minimum": 1,
-      "default": 1
-    },
-    "system_prompt": {
-      "type": "string",
-      "description": "The system prompt to use for the prompt."
-    },
-    "temperature": {
-      "type": "number",
-      "description": "A number between 0 and 2 that controls the randomness of the response. Lower numbers result in less random (although still random) responses.",
-      "minimum": 0,
-      "maximum": 2,
-      "default": 0
-    },
-    "tools": {
-      "type": "array",
-      "description": "A list of tools available to the prompt",
-      "items": {
-        "$ref": "#/$defs/tool"
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "description": "An array of messages to include run with the prompt.",
+            "items": {
+              "$ref": "#/$defs/message"
+            },
+            "minItems": 1
+          },
+          "checks": {
+            "type": "array",
+            "description": "a list of checks to perform for this specific eval. Merged with the general list.",
+            "items": {
+              "ref": "#/$defs/check"
+            },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": false
       },
       "minItems": 1
     }

@@ -3,8 +3,7 @@
 name: Dad Jokes
 version: 1
 
-provider: openai
-model: gpt-4o-mini
+model: openai@gpt-4o-mini
 
 system_prompt: |-
   Tell me a dad joke. 
