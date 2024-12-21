@@ -7,14 +7,16 @@
   "$defs": {
     "check": {
       "description": "An eval check to perform on the response.",
-      "anyOf": [
+      "oneOf": [
         {
           "type": "object",
-          "description": "Check if profanity is included.",
           "required": ["id"],
+          "description": "Check if profanity is included.",
           "properties": {
             "id": {
-              "constant": "profanity"
+              "type": "string",
+              "const": "profanity",
+              "description": "The id of the check"
             },
             "model": {
               "$ref": "https://raw.githubusercontent.com/sjones6/eval-anywhere/refs/heads/main/schemas/common.json#/$defs/model",
@@ -37,7 +39,9 @@
           "required": ["id", "instructions"],
           "properties": {
             "id": {
-              "constant": "aligned"
+              "type": "string",
+              "const": "aligned",
+              "description": "The id of the check"
             },
             "model": {
               "$ref": "https://raw.githubusercontent.com/sjones6/eval-anywhere/refs/heads/main/schemas/common.json#/$defs/model",
@@ -56,7 +60,8 @@
           "required": ["id", "value"],
           "properties": {
             "id": {
-              "constant": "exact_match"
+              "type": "string",
+              "const": "exact_match"
             },
             "value": {
               "type": "string",
@@ -73,7 +78,6 @@
         {
           "type": "object",
           "description": "Check if returned value is an exact match.",
-          "required": ["id"],
           "properties": {
             "id": {
               "type": "string",
