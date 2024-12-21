@@ -22,9 +22,7 @@
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",
     "@types/node": "^22.10.2",
-    "json-refs": "^3.0.15",
     "json-schema-to-typescript": "^15.0.3",
-    "json-schema-to-zod": "^2.5.0",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
@@ -41,6 +39,8 @@
     "commander": "^12.1.0",
     "glob": "^11.0.0",
     "yaml": "^2.6.1",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.1",
+    "zod-to-ts": "^1.2.0"
   }
 }

@@ -58,7 +58,7 @@ export const ${className}: EvalAnywherePrompt = ${JSON.stringify(prompt, null, 2
     await fsp.writeFile(
       path.join(cfg.outDir, "index.ts"),
       `
-export type { EvalAnywherePrompt, Message, Tool } from './types';
+export type { EvalAnywherePrompt } from './types';
 ${indexLines.join("\n")}
 `,
     );

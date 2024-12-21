@@ -1,4 +1,4 @@
-import { Prompt } from "../gen/prompt";
+import { Prompt } from "../schemas/prompt";
 
 export type Lang = string;
 
