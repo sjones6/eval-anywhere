@@ -3,8 +3,7 @@
 name: Get Weather
 version: 1
 
-provider: openai
-model: gpt-4o-mini
+model: openai@gpt-4o-mini
 
 tools:
   - name: get_current_weather
