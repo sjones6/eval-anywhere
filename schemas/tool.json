@@ -1,5 +1,24 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/sjones6/eval-anywhere/refs/heads/main/schemas/tool.json",
-  "$ref": "https://raw.githubusercontent.com/sjones6/eval-anywhere/refs/heads/main/schemas/common.json#/$defs/tool"
+  "$ref": "#/$defs/EvalAnywhereTool",
+  "$defs": {
+    "EvalAnywhereTool": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the tool function. This should be descriptive as to what the tool does."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool."
+        },
+        "parameters": {
+          "description": "A JSON schema definition of how the tool parameters should be constructed."
+        }
+      },
+      "required": ["name", "description"],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
 }

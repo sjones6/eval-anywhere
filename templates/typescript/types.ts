@@ -1,17 +1,8 @@
-/* eslint-disable */
-
-/**
- * A JSON schema for prompt.yaml files. See https://github.com/sjones6/eval-anywhere for more information
- */
-export interface EvalAnywherePrompt {
-  /**
-   * The name of the prompt. For output, this will be turned into camel case.
-   */
+export type EvalAnywherePrompt = {
+  /** The name of the prompt. For output, this will be turned into camel case. */
   name: string;
-  /**
-   * The default model to use with this prompt. Ultimately, the target runtime will choose a supported prompt.
-   */
-  model?: (
+  /** The default model to use with this prompt. Ultimately, the target runtime will choose a supported prompt. */
+  model?:
     | (
         | "anthropic@claude-3-5-sonnet-20241022"
         | "anthropic@claude-3-5-sonnet-latest"
@@ -95,369 +86,118 @@ export interface EvalAnywherePrompt {
         | "groq@llama-3.1-8b-instant"
         | "groq@mixtral-8x7b-32768"
       )
-    | string
-  ) &
-    string;
-  /**
-   * An array of few shot messages to include in the prompt.
-   *
-   * @minItems 1
-   */
-  few_shot_messages?: [
-    (
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "user";
-          /**
-           * The content of the message.
-           */
-          content: string;
-          /**
-           * A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send.
-           */
-          name?: string;
-        }
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "assistant";
-          /**
-           * The content of the message.
-           */
-          content: string | null;
-          /**
-           * @minItems 1
-           */
-          tool_calls?: [
-            {
-              /**
-               * The ID of the function call
-               */
-              id: string;
-              function: {
-                /**
-                 * The stringified JSON arguments
-                 */
-                arguments: string;
-                /**
-                 * The name of the function to call
-                 */
-                name: string;
-              };
-              type: "function";
-            },
-            ...{
-              /**
-               * The ID of the function call
-               */
-              id: string;
-              function: {
-                /**
-                 * The stringified JSON arguments
-                 */
-                arguments: string;
-                /**
-                 * The name of the function to call
-                 */
-                name: string;
-              };
-              type: "function";
-            }[],
-          ];
-        }
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "tool";
-          /**
-           * The stringified JSON of the tool call response.
-           */
-          content: string;
-          /**
-           * The ID of the tool call. Must match an actual tool call.
-           */
-          tool_call_id: string;
-        }
-    ),
-    ...(
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "user";
-          /**
-           * The content of the message.
-           */
-          content: string;
-          /**
-           * A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send.
-           */
-          name?: string;
-        }
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "assistant";
-          /**
-           * The content of the message.
-           */
-          content: string | null;
-          /**
-           * @minItems 1
-           */
-          tool_calls?: [
-            {
-              /**
-               * The ID of the function call
-               */
-              id: string;
-              function: {
-                /**
-                 * The stringified JSON arguments
-                 */
-                arguments: string;
-                /**
-                 * The name of the function to call
-                 */
-                name: string;
-              };
-              type: "function";
-            },
-            ...{
-              /**
-               * The ID of the function call
-               */
-              id: string;
-              function: {
-                /**
-                 * The stringified JSON arguments
-                 */
-                arguments: string;
-                /**
-                 * The name of the function to call
-                 */
-                name: string;
-              };
-              type: "function";
-            }[],
-          ];
-        }
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "tool";
-          /**
-           * The stringified JSON of the tool call response.
-           */
-          content: string;
-          /**
-           * The ID of the tool call. Must match an actual tool call.
-           */
-          tool_call_id: string;
-        }
-    )[],
-  ];
-  /**
-   * An array of messages to include _after_ the users messages are inserted. These are helpful for providing guidance and guardrails as the final thing the model sees.
-   *
-   * @minItems 1
-   */
-  final_messages?: [
-    (
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "user";
-          /**
-           * The content of the message.
-           */
-          content: string;
-          /**
-           * A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send.
-           */
-          name?: string;
-        }
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "assistant";
-          /**
-           * The content of the message.
-           */
-          content: string | null;
-          /**
-           * @minItems 1
-           */
-          tool_calls?: [
-            {
-              /**
-               * The ID of the function call
-               */
-              id: string;
-              function: {
-                /**
-                 * The stringified JSON arguments
-                 */
-                arguments: string;
-                /**
-                 * The name of the function to call
-                 */
-                name: string;
-              };
-              type: "function";
-            },
-            ...{
-              /**
-               * The ID of the function call
-               */
-              id: string;
-              function: {
-                /**
-                 * The stringified JSON arguments
-                 */
-                arguments: string;
-                /**
-                 * The name of the function to call
-                 */
-                name: string;
-              };
-              type: "function";
-            }[],
-          ];
-        }
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "tool";
-          /**
-           * The stringified JSON of the tool call response.
-           */
-          content: string;
-          /**
-           * The ID of the tool call. Must match an actual tool call.
-           */
-          tool_call_id: string;
-        }
-    ),
-    ...(
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "user";
-          /**
-           * The content of the message.
-           */
-          content: string;
-          /**
-           * A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send.
-           */
-          name?: string;
-        }
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "assistant";
-          /**
-           * The content of the message.
-           */
-          content: string | null;
-          /**
-           * @minItems 1
-           */
-          tool_calls?: [
-            {
-              /**
-               * The ID of the function call
-               */
-              id: string;
-              function: {
-                /**
-                 * The stringified JSON arguments
-                 */
-                arguments: string;
-                /**
-                 * The name of the function to call
-                 */
-                name: string;
-              };
-              type: "function";
-            },
-            ...{
-              /**
-               * The ID of the function call
-               */
-              id: string;
-              function: {
-                /**
-                 * The stringified JSON arguments
-                 */
-                arguments: string;
-                /**
-                 * The name of the function to call
-                 */
-                name: string;
-              };
-              type: "function";
-            }[],
-          ];
-        }
-      | {
-          /**
-           * The assumed role of the entity responsible for this message.
-           */
-          role: "tool";
-          /**
-           * The stringified JSON of the tool call response.
-           */
-          content: string;
-          /**
-           * The ID of the tool call. Must match an actual tool call.
-           */
-          tool_call_id: string;
-        }
-    )[],
-  ];
-  /**
-   * The version of the prompt.
-   */
+    | undefined;
+  /** An array of few shot messages to include in the prompt. */
+  few_shot_messages?:
+    | (
+        | {
+            /** The assumed role of the entity responsible for this message. */
+            role: "user";
+            /** The content of the message. */
+            content: string;
+            /** A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send. */
+            name?: string | undefined;
+          }
+        | {
+            /** The assumed role of the entity responsible for this message. */
+            role: "assistant";
+            /** The content of the message. */
+            content: string;
+            tool_calls?:
+              | {
+                  /** The ID of the function call */
+                  id: string;
+                  function: {
+                    /** The stringified JSON arguments */
+                    arguments: string;
+                    /** The name of the function to call */
+                    name: string;
+                  };
+                  type: "function";
+                }[]
+              | undefined;
+          }
+        | {
+            /** The assumed role of the entity responsible for this message. */
+            role: "tool";
+            content: {
+              type: "tool-result";
+              /** ID of the tool call that this result is associated with. */
+              toolCallId: string;
+              /** Name of the tool that generated this result. */
+              toolName: string;
+              result: {} | boolean | string | number | null;
+              /** Optional flag if the result is an error or an error message. */
+              isError: boolean;
+            }[];
+            /** The ID of the tool call. Must match an actual tool call. */
+            tool_call_id: string;
+          }
+      )[]
+    | undefined;
+  /** An array of messages to include _after_ the users messages are inserted. These are helpful for providing guidance and guardrails as the final thing the model sees. */
+  final_messages?:
+    | (
+        | {
+            /** The assumed role of the entity responsible for this message. */
+            role: "user";
+            /** The content of the message. */
+            content: string;
+            /** A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send. */
+            name?: string | undefined;
+          }
+        | {
+            /** The assumed role of the entity responsible for this message. */
+            role: "assistant";
+            /** The content of the message. */
+            content: string;
+            tool_calls?:
+              | {
+                  /** The ID of the function call */
+                  id: string;
+                  function: {
+                    /** The stringified JSON arguments */
+                    arguments: string;
+                    /** The name of the function to call */
+                    name: string;
+                  };
+                  type: "function";
+                }[]
+              | undefined;
+          }
+        | {
+            /** The assumed role of the entity responsible for this message. */
+            role: "tool";
+            content: {
+              type: "tool-result";
+              /** ID of the tool call that this result is associated with. */
+              toolCallId: string;
+              /** Name of the tool that generated this result. */
+              toolName: string;
+              result: {} | boolean | string | number | null;
+              /** Optional flag if the result is an error or an error message. */
+              isError: boolean;
+            }[];
+            /** The ID of the tool call. Must match an actual tool call. */
+            tool_call_id: string;
+          }
+      )[]
+    | undefined;
+  /** The version of the prompt. */
   version?: number;
-  /**
-   * The system prompt to use for the prompt.
-   */
+  /** The system prompt to use for the prompt. */
   system_prompt: string;
-  /**
-   * A number between 0 and 2 that controls the randomness of the response. Lower numbers result in less random (although still random) responses.
-   */
+  /** A number between 0 and 2 that controls the randomness of the response. Lower numbers result in less random (although still random) responses. */
   temperature?: number;
-  /**
-   * A list of tools available to the prompt
-   *
-   * @minItems 1
-   */
-  tools?: [Tool, ...Tool[]];
-}
-export interface Tool {
-  /**
-   * The name of the tool function. This should be descriptive as to what the tool does.
-   */
-  name: string;
-  /**
-   * The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool.
-   */
-  description: string;
-  /**
-   * A JSON schema definition of how the tool parameters should be constructed.
-   */
-  parameters: string;
-}
+  /** A list of tools available to the prompt */
+  tools?:
+    | {
+        /** The name of the tool function. This should be descriptive as to what the tool does. */
+        name: string;
+        /** The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool. */
+        description: string;
+        /** A JSON schema definition of how the tool parameters should be constructed. */
+        parameters?: any;
+      }[]
+    | undefined;
+};
