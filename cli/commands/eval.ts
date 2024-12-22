@@ -1,4 +1,10 @@
-import { generateObject, generateText, LanguageModelV1 } from "ai";
+import {
+  CoreTool,
+  generateObject,
+  generateText,
+  LanguageModelV1,
+  jsonSchema,
+} from "ai";
 import { loadModel } from "../utils/models.js";
 import z from "zod";
 import chalk from "chalk";
@@ -8,9 +14,11 @@ import {
   check,
   ExactMatch,
   ProfanityCheck,
+  ToolCall as ToolCallCheck,
 } from "../schemas/check";
 import { Prompt } from "../schemas/prompt";
 import { Message } from "../schemas/message";
+import { isEqual } from "lodash";
 
 const checksSchema = z.array(check).min(1);
 
@@ -118,7 +126,7 @@ const runEvaluationChecks = async ({
   prompt: Prompt;
 }): Promise<EvaluationResult> => {
   const start = Date.now();
-  const { text } = await generateText({
+  const { text, toolCalls } = await generateText({
     model,
     system: prompt.system_prompt,
     messages: [
@@ -127,6 +135,22 @@ const runEvaluationChecks = async ({
       ...(prompt.final_messages ?? []),
     ],
     temperature: prompt.temperature,
+    ...(prompt.tools
+      ? {
+          tools: prompt.tools.reduce(
+            (tools, tool) => {
+              tools[tool.name] = {
+                description: tool.description,
+                parameters: jsonSchema(JSON.parse(tool.parameters.trim())),
+              };
+              return tools;
+            },
+            {} as { [key: string]: CoreTool },
+          ),
+        }
+      : []),
+    // ensure that the tool calls are returned rather than called an executed.
+    maxSteps: 1,
   });
   const durMs = Date.now() - start;
 
@@ -142,6 +166,9 @@ const runEvaluationChecks = async ({
         break;
       case "aligned":
         results.push(await aligned(text, check, prompt));
+        break;
+      case "tool_call":
+        results.push(await toolCallCheck(check, toolCalls));
         break;
       case "custom":
       default:
@@ -244,4 +271,36 @@ Here's a list of words that must not be included in any form: ${JSON.stringify(c
       model,
     },
   };
+};
+
+export const toolCallCheck = async (
+  check: ToolCallCheck,
+  toolCalls: {
+    toolName: string;
+    args: unknown;
+  }[],
+): Promise<CheckResult> => {
+  const result: CheckResult = {
+    success: false,
+    name: check.name ?? check.id,
+    data: {
+      tool_calls: toolCalls,
+      check: check.tool_calls,
+    },
+  };
+  if (check.tool_calls.length !== toolCalls.length) {
+    return result;
+  }
+
+  result.success = toolCalls.every((toolCall, i) => {
+    const checkToolCall = check.tool_calls[i];
+    if (!checkToolCall) {
+      return false;
+    }
+    return (
+      checkToolCall.tool_name == toolCall.toolName &&
+      isEqual(checkToolCall.args, toolCall.args)
+    );
+  });
+  return result;
 };

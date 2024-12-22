@@ -197,7 +197,7 @@ export type EvalAnywherePrompt = {
         /** The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool. */
         description: string;
         /** A JSON schema definition of how the tool parameters should be constructed. */
-        parameters?: any;
+        parameters: string;
       }[]
     | undefined;
 };

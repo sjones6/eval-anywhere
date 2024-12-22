@@ -93,6 +93,10 @@
         {
           "type": "object",
           "properties": {
+            "name": {
+              "type": "string",
+              "description": "An optional name describing the check."
+            },
             "id": {
               "type": "string",
               "const": "profanity"
@@ -117,6 +121,9 @@
         {
           "type": "object",
           "properties": {
+            "name": {
+              "$ref": "#/$defs/EvalAnywhereCheck/anyOf/0/properties/name"
+            },
             "id": {
               "type": "string",
               "const": "aligned"
@@ -137,6 +144,9 @@
         {
           "type": "object",
           "properties": {
+            "name": {
+              "$ref": "#/$defs/EvalAnywhereCheck/anyOf/0/properties/name"
+            },
             "id": {
               "type": "string",
               "const": "exact_match"
@@ -158,6 +168,62 @@
         {
           "type": "object",
           "properties": {
+            "name": {
+              "$ref": "#/$defs/EvalAnywhereCheck/anyOf/0/properties/name"
+            },
+            "id": {
+              "type": "string",
+              "const": "tool_call"
+            },
+            "tool_calls": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "tool_name": {
+                    "type": "string",
+                    "description": "the name of the tool called"
+                  },
+                  "args": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "array"
+                      }
+                    ],
+                    "description": "the arguments passed for the tool call."
+                  }
+                },
+                "required": ["tool_name", "args"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["id", "tool_calls"],
+          "additionalProperties": false,
+          "description": "Determine if a tool call is made appropriately."
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/EvalAnywhereCheck/anyOf/0/properties/name"
+            },
             "id": {
               "type": "string",
               "const": "custom"

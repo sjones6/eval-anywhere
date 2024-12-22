@@ -569,10 +569,11 @@
                 "description": "The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool."
               },
               "parameters": {
+                "type": "string",
                 "description": "A JSON schema definition of how the tool parameters should be constructed."
               }
             },
-            "required": ["name", "description"],
+            "required": ["name", "description", "parameters"],
             "additionalProperties": false
           },
           "minItems": 1,
@@ -588,6 +589,10 @@
                   {
                     "type": "object",
                     "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "An optional name describing the check."
+                      },
                       "id": {
                         "type": "string",
                         "const": "profanity"
@@ -695,6 +700,10 @@
                   {
                     "type": "object",
                     "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "An optional name describing the check."
+                      },
                       "id": {
                         "type": "string",
                         "const": "aligned"
@@ -798,6 +807,10 @@
                   {
                     "type": "object",
                     "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "An optional name describing the check."
+                      },
                       "id": {
                         "type": "string",
                         "const": "exact_match"
@@ -819,6 +832,64 @@
                   {
                     "type": "object",
                     "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "An optional name describing the check."
+                      },
+                      "id": {
+                        "type": "string",
+                        "const": "tool_call"
+                      },
+                      "tool_calls": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "tool_name": {
+                              "type": "string",
+                              "description": "the name of the tool called"
+                            },
+                            "args": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "object",
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "array"
+                                }
+                              ],
+                              "description": "the arguments passed for the tool call."
+                            }
+                          },
+                          "required": ["tool_name", "args"],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": ["id", "tool_calls"],
+                    "additionalProperties": false,
+                    "description": "Determine if a tool call is made appropriately."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "An optional name describing the check."
+                      },
                       "id": {
                         "type": "string",
                         "const": "custom"
@@ -1084,6 +1155,10 @@
                         {
                           "type": "object",
                           "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "An optional name describing the check."
+                            },
                             "id": {
                               "type": "string",
                               "const": "profanity"
@@ -1191,6 +1266,10 @@
                         {
                           "type": "object",
                           "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "An optional name describing the check."
+                            },
                             "id": {
                               "type": "string",
                               "const": "aligned"
@@ -1294,6 +1373,10 @@
                         {
                           "type": "object",
                           "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "An optional name describing the check."
+                            },
                             "id": {
                               "type": "string",
                               "const": "exact_match"
@@ -1315,6 +1398,64 @@
                         {
                           "type": "object",
                           "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "An optional name describing the check."
+                            },
+                            "id": {
+                              "type": "string",
+                              "const": "tool_call"
+                            },
+                            "tool_calls": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "tool_name": {
+                                    "type": "string",
+                                    "description": "the name of the tool called"
+                                  },
+                                  "args": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "array"
+                                      }
+                                    ],
+                                    "description": "the arguments passed for the tool call."
+                                  }
+                                },
+                                "required": ["tool_name", "args"],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": ["id", "tool_calls"],
+                          "additionalProperties": false,
+                          "description": "Determine if a tool call is made appropriately."
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "An optional name describing the check."
+                            },
                             "id": {
                               "type": "string",
                               "const": "custom"

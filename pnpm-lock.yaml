@@ -29,6 +29,9 @@ importers:
       '@commander-js/extra-typings':
         specifier: ^12.1.0
         version: 12.1.0(commander@12.1.0)
+      '@types/lodash':
+        specifier: ^4.17.13
+        version: 4.17.13
       ai:
         specifier: ^4.0.21
         version: 4.0.21(react@18.3.1)(zod@3.24.1)
@@ -41,6 +44,12 @@ importers:
       glob:
         specifier: ^11.0.0
         version: 11.0.0
+      json-schema-to-zod:
+        specifier: ^2.5.0
+        version: 2.5.0
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       yaml:
         specifier: ^2.6.1
         version: 2.6.1
@@ -780,6 +789,10 @@ packages:
   json-schema-to-typescript@15.0.3:
     resolution: {integrity: sha512-iOKdzTUWEVM4nlxpFudFsWyUiu/Jakkga4OZPEt7CGoSEsAsUgdOZqR6pcgx2STBek9Gm4hcarJpXSzIvZ/hKA==}
     engines: {node: '>=16.0.0'}
+    hasBin: true
+
+  json-schema-to-zod@2.5.0:
+    resolution: {integrity: sha512-77mMOdHz+VdoFN6VYCYzEmH//WzwLa5LnphLT4gaVCcHn7R1PbzNCsZnlIFKBAfOUYuFyatkDTJEy1GVo4DnLQ==}
     hasBin: true
 
   json-schema@0.4.0:
@@ -1986,6 +1999,8 @@ snapshots:
       minimist: 1.2.8
       prettier: 3.4.2
       tinyglobby: 0.2.10
+
+  json-schema-to-zod@2.5.0: {}
 
   json-schema@0.4.0: {}
 
