@@ -7,12 +7,16 @@ export const evaluation = z
     checks: z
       .array(check)
       .min(1)
-      .describe("a list of checks to perform on every eval")
+      .describe("a list of checks to perform on every evaluation case.")
       .optional(),
-    evals: z
+    evaluations: z
       .array(
         z
           .object({
+            name: z
+              .string()
+              .describe("A name describing this evaluation")
+              .optional(),
             messages: z
               .array(message)
               .min(1)
@@ -28,7 +32,7 @@ export const evaluation = z
           .strict(),
       )
       .min(1)
-      .describe("A list of evals to run"),
+      .describe("A list of evaluations to run"),
   })
   .strict()
   .describe(

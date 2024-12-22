@@ -175,13 +175,17 @@
             ]
           },
           "minItems": 1,
-          "description": "a list of checks to perform on every eval"
+          "description": "a list of checks to perform on every evaluation case."
         },
-        "evals": {
+        "evaluations": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
+              "name": {
+                "type": "string",
+                "description": "A name describing this evaluation"
+              },
               "messages": {
                 "type": "array",
                 "items": {
@@ -343,10 +347,10 @@
             "additionalProperties": false
           },
           "minItems": 1,
-          "description": "A list of evals to run"
+          "description": "A list of evaluations to run"
         }
       },
-      "required": ["evals"],
+      "required": ["evaluations"],
       "additionalProperties": false,
       "description": "A JSON schema for eval.yaml files. See https://github.com/sjones6/eval-anywhere for more information"
     }

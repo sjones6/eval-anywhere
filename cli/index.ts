@@ -1,12 +1,18 @@
 import path from "node:path";
-import fs from "node:fs/promises";
+import fs from "node:fs";
+import fsp from "node:fs/promises";
 
 import { program, Option } from "@commander-js/extra-typings";
 import { languageCompilers, isSupportedLanguage } from "./compile";
-import { loadPromptsAndEvals } from "./utils/load";
+import { loadPrompts } from "./utils/load";
 import { runEvals } from "./commands/eval";
 
 const languages = Object.keys(languageCompilers);
+
+const globMatch = new Option(
+  "-m --match <match>",
+  "The match pattern to search for prompts. Defaults to **/*prompt.{yaml,yml}",
+).default("**/*prompt.{yaml,yml}");
 
 const format = new Option(
   "-l --language <language>",
@@ -20,32 +26,51 @@ const outDir = new Option(
   "The output directory in which to write the prompts.",
 ).makeOptionMandatory();
 
+const resolveDirPathToCWD = (
+  dir: string,
+  {
+    checkExistence = true,
+  }: {
+    checkExistence?: boolean;
+  } = {},
+): string => {
+  const dirPath = path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
+  if (checkExistence && !fs.statSync(dirPath).isDirectory()) {
+    throw new Error(`Directory not found: ${dirPath}`);
+  }
+  return dirPath;
+};
+
 /**
  * Compile prompts into target language files.
  */
 program
   .command("compile")
-  .argument("<dir>")
+  .argument(
+    "<dir>",
+    "the directory in which to perform the search for prompts, absolute path or relative to current working directory",
+  )
   .addOption(outDir)
+  .addOption(globMatch)
   .addOption(format)
-  .action(async (dir, { language, out }) => {
-    const cwd = process.cwd();
-    const outDir = path.isAbsolute(out) ? out : path.join(cwd, out);
-    const fullDir = path.join(process.cwd(), dir.replace(/\/?$/, ""));
+  .action(async (dir, { language, out, match }) => {
+    const baseDir = resolveDirPathToCWD(dir);
+    const outDir = resolveDirPathToCWD(out, {
+      checkExistence: false,
+    });
     const packageDir = __filename.split("dist")[0];
 
     if (!isSupportedLanguage(language)) {
       throw new Error(`Language "${language}" is not supported`);
     }
 
-    await fs.mkdir(outDir, { recursive: true });
+    await fsp.mkdir(outDir, { recursive: true });
 
-    const promptsAndEvals = await loadPromptsAndEvals({ dir: fullDir });
     const res = await languageCompilers[language]!({
       lang: language,
       outDir: outDir,
       packageDir: packageDir!,
-      prompts: promptsAndEvals.map(({ prompt }) => prompt),
+      prompts: await loadPrompts({ baseDir, glob: match }),
     });
     if (res.success) {
       console.log(`Successfully compiled prompts to ${outDir}`);
@@ -60,13 +85,23 @@ program
  */
 program
   .command("eval")
-  .argument("<dir>")
-  .action(async (dir) => {
+  .argument("<dir>", "the directory in which to run evals")
+  .addOption(globMatch)
+  .action(async (dir, { match }) => {
     try {
-      const fullDir = path.join(process.cwd(), dir.replace(/\/?$/, ""));
-      await runEvals({
-        promptsAndEvals: await loadPromptsAndEvals({ dir: fullDir }),
+      const out = resolveDirPathToCWD("./eval-results.json", {
+        checkExistence: false,
       });
+      const prompts = await loadPrompts({
+        baseDir: resolveDirPathToCWD(dir),
+        glob: match,
+      });
+      const results = await runEvals({
+        prompts,
+      });
+      await fsp.writeFile(out, JSON.stringify(results, null, 2));
+
+      console.log(`Results written to ${out}`);
     } catch (err) {
       console.error(`Unexpected error: `, err);
       process.exit(1);

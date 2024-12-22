@@ -32,16 +32,18 @@ export const compileTypeScript: CompileFn = async (cfg) => {
 
     const indexLines: string[] = [];
 
-    // each prompt
+    // write out each prompt
     for (const prompt of cfg.prompts) {
       const className = pascalCase(prompt.name);
       const filePath = nameToFileName(prompt.name);
       indexLines.push(`export { ${className} } from './${filePath}';`);
 
+      const { evaluation, ...promptNoEval } = prompt;
+
       const unformattedPrompt = `
 import type { EvalAnywherePrompt } from './types';
 
-export const ${className}: EvalAnywherePrompt = ${JSON.stringify(prompt, null, 2)};
+export const ${className}: EvalAnywherePrompt = ${JSON.stringify(promptNoEval, null, 2)};
 `;
 
       const formattedPrompt = await prettier.format(unformattedPrompt, {

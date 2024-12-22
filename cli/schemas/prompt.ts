@@ -2,10 +2,11 @@ import { z } from "zod";
 import { models } from "./models";
 import { message } from "./message";
 import { tool } from "./tool";
+import { evaluation } from "./evaluation";
 
 export const messages = z.array(message).min(1);
 
-export const prompt = z
+export const promptNoEval = z
   .object({
     name: z
       .string()
@@ -52,4 +53,11 @@ export const prompt = z
   .describe(
     "A JSON schema for prompt.yaml files. See https://github.com/sjones6/eval-anywhere for more information",
   );
+
+export type PromptNoEval = z.infer<typeof promptNoEval>;
+
+export const prompt = promptNoEval.extend({
+  evaluation: evaluation.optional(),
+});
+
 export type Prompt = z.infer<typeof prompt>;

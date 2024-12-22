@@ -1,18 +1,10 @@
-import path from "node:path";
-import fs from "node:fs";
 import fsp from "node:fs/promises";
 
 import z from "zod";
 
 import { parse } from "yaml";
 import { prompt, Prompt } from "../schemas/prompt";
-import { evaluation, Evaluation } from "../schemas/evaluation";
 import { globSync } from "glob";
-
-export type PromptWithEvals = {
-  prompt: Prompt;
-  evaluation: Evaluation;
-};
 
 const loadFileWithSchema = async <Schema extends z.ZodTypeAny>(
   file: string,
@@ -30,20 +22,23 @@ const loadFileWithSchema = async <Schema extends z.ZodTypeAny>(
   return parsedContents.data;
 };
 
-export const loadPromptsAndEvals = async ({
-  dir,
+export const loadPrompts = async ({
+  glob,
+  baseDir,
 }: {
-  dir: string;
-}): Promise<PromptWithEvals[]> => {
-  const promptsAndEvals: PromptWithEvals[] = [];
+  baseDir: string;
+  glob: string;
+}): Promise<Prompt[]> => {
+  const prompts: Prompt[] = [];
 
-  const files = globSync(`${dir}/**/prompt.{yaml,yml}`, {
+  const files = globSync(`${baseDir}/${glob}`, {
+    cwd: baseDir,
     stat: true,
     withFileTypes: true,
   }).filter((path) => !!path && path.mode !== undefined && path.mode & 0o040);
 
   if (!files.length) {
-    console.log(`No matching files found in ${dir}`);
+    console.log(`No matching files found in ${baseDir}`);
   }
 
   for (const file of files) {
@@ -53,32 +48,8 @@ export const loadPromptsAndEvals = async ({
       throw new Error(`failed to parse prompt: ${file.fullpath()}`);
     }
 
-    const evalPath = ["eval.yaml", "eval.yml", "evals.yaml", "eval.yml"]
-      .map((filename) => path.join(path.dirname(file.fullpath()), filename))
-      .find((p) => fs.existsSync(p));
-
-    if (!evalPath) {
-      promptsAndEvals.push({
-        prompt: loadedPrompt,
-        evaluation: {
-          evals: [],
-          checks: [],
-        },
-      });
-      continue;
-    }
-
-    if (evalPath) {
-      const loadedEval = await loadFileWithSchema(evalPath, evaluation);
-      promptsAndEvals.push({
-        prompt: loadedPrompt,
-        evaluation: loadedEval ?? {
-          evals: [],
-          checks: [],
-        },
-      });
-    }
+    prompts.push(loadedPrompt);
   }
 
-  return promptsAndEvals;
+  return prompts;
 };

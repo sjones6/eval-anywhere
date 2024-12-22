@@ -6,7 +6,7 @@ import { models } from "../cli/schemas/models";
 import { message } from "../cli/schemas/message";
 import { tool } from "../cli/schemas/tool";
 import { evaluation } from "../cli/schemas/evaluation";
-import { messages, prompt } from "../cli/schemas/prompt";
+import { messages, prompt, promptNoEval } from "../cli/schemas/prompt";
 
 import { zodToTs, printNode, createTypeAlias } from "zod-to-ts";
 
@@ -66,7 +66,8 @@ writeSchema(
 writeSchema(
   zodToJsonSchema(prompt, {
     name: "EvalAnywherePrompt",
-    // This results in
+    // This results in embedded schemas being inlined.
+    // It's more noisy, but downstream tools tend to do better.
     $refStrategy: "none",
     definitionPath: "$defs",
     definitions: {
@@ -76,7 +77,11 @@ writeSchema(
   "prompt.yaml.json",
 );
 
-const { node } = zodToTs(prompt, "EvalAnywherePrompt");
+/**
+ * Using prompt without the eval since we don't want evals to show up
+ * in the prompts that are written out.
+ */
+const { node } = zodToTs(promptNoEval, "EvalAnywherePrompt");
 
 fs.writeFileSync(
   path.join(process.cwd(), "templates", "typescript", "types.ts"),

@@ -1,8 +1,14 @@
 import { generateObject, generateText, LanguageModelV1 } from "ai";
-import { PromptWithEvals } from "../utils/load";
-import { loadModel } from "../utils/models";
+import { loadModel } from "../utils/models.js";
 import z from "zod";
-import { AlignmentCheck, Check, check, ExactMatch, ProfanityCheck } from "../schemas/check";
+import chalk from "chalk";
+import {
+  AlignmentCheck,
+  Check,
+  check,
+  ExactMatch,
+  ProfanityCheck,
+} from "../schemas/check";
 import { Prompt } from "../schemas/prompt";
 import { Message } from "../schemas/message";
 
@@ -10,48 +16,93 @@ const checksSchema = z.array(check).min(1);
 
 const defaultEvalModel = "openai@gpt-4o-mini";
 
+export type CheckResult = {
+  success: boolean;
+  name: string;
+  data: unknown;
+};
+
+export type EvaluationResult = {
+  messages: Message[];
+  content: string;
+  model: string;
+  provider: string;
+  durationMS: number;
+  checks: CheckResult[];
+};
+
+export type PromptWithResults = {
+  prompt: Prompt;
+  evaluationResults: EvaluationResult[];
+};
+
 export const runEvals = async ({
-  promptsAndEvals,
+  prompts,
 }: {
-  promptsAndEvals: PromptWithEvals[];
-}): Promise<void> => {
-  for (const { prompt, evaluation } of promptsAndEvals) {
-    console.log(`runnign evals for prompt ${prompt.name}`);
+  prompts: Prompt[];
+}): Promise<PromptWithResults[]> => {
+  const promptResults: PromptWithResults[] = [];
 
-    if (!evaluation.evals.length) {
-      continue;
-    }
+  try {
+    for (const { evaluation, ...prompt } of prompts) {
+      if (!evaluation?.evaluations.length) {
+        console.warn(chalk.bgMagenta(`No evals for ${prompt.name}`));
+        continue;
+      }
 
-    const modelProviderSlug = prompt.model ?? defaultEvalModel;
-    const model = loadModel(modelProviderSlug);
-    if (!model) {
-      console.error(`Unsupported model: ${modelProviderSlug}`);
-      continue;
-    }
+      console.log(chalk.yellow(`Running evals for prompt ${prompt.name}`));
 
-    let i = 0;
-    for (const evalCase of evaluation.evals) {
-      i++;
-
-      const checksParsed = checksSchema.safeParse([
-        ...(evaluation.checks ?? []),
-        ...(evalCase.checks ?? []),
-      ]);
-
-      if (!checksParsed.success) {
-        console.warn(
-          `Eval case ${i} of prompt "${prompt.name}" has invalid checks. This is a no-op`,
+      const modelProviderSlug = prompt.model ?? defaultEvalModel;
+      const model = loadModel(modelProviderSlug);
+      if (!model) {
+        console.error(
+          chalk.red(`Error: unsupported model ${modelProviderSlug}`),
         );
         continue;
       }
 
-      await runEvaluationChecks({
-        model,
+      const evaluationResults: EvaluationResult[] = [];
+
+      let i = 0;
+      for (const evalCase of evaluation.evaluations) {
+        i++;
+
+        const checksParsed = checksSchema.safeParse([
+          ...(evaluation.checks ?? []),
+          ...(evalCase.checks ?? []),
+        ]);
+
+        if (!checksParsed.success) {
+          console.warn(
+            chalk.bgMagenta(
+              `Eval case ${i} of prompt "${prompt.name}" has invalid checks. This is a no-op`,
+            ),
+          );
+          continue;
+        }
+
+        const evaluationResult = await runEvaluationChecks({
+          model,
+          prompt,
+          checks: checksParsed.data,
+          evalMessages: evalCase.messages,
+        });
+
+        evaluationResults.push(evaluationResult);
+      }
+
+      promptResults.push({
         prompt,
-        checks: checksParsed.data,
-        evalMessages: evalCase.messages,
+        evaluationResults,
       });
     }
+
+    return promptResults;
+  } catch (err) {
+    console.error(
+      `${chalk.bgRed("Err")}: Unexpected error thrown running evals ${err}`,
+    );
+    throw err;
   }
 };
 
@@ -65,7 +116,8 @@ const runEvaluationChecks = async ({
   evalMessages: Message[];
   model: LanguageModelV1;
   prompt: Prompt;
-}): Promise<void> => {
+}): Promise<EvaluationResult> => {
+  const start = Date.now();
   const { text } = await generateText({
     model,
     system: prompt.system_prompt,
@@ -76,82 +128,120 @@ const runEvaluationChecks = async ({
     ],
     temperature: prompt.temperature,
   });
+  const durMs = Date.now() - start;
+
+  const results: CheckResult[] = [];
 
   for (const check of checks) {
     switch (check.id) {
       case "profanity":
-        const hasProfanity = await profanityCheck(text, check, prompt);
-        console.log("hasProfanity", hasProfanity);
+        results.push(await profanityCheck(text, check, prompt));
         break;
       case "exact_match":
-        const hasExactMatch = await exactMatch(text, check);
-        console.log("match", hasExactMatch);
+        results.push(await exactMatch(text, check));
         break;
       case "aligned":
-        const isAligned = await aligned(text, check, prompt);
-        console.log("aligned", isAligned);
+        results.push(await aligned(text, check, prompt));
         break;
       case "custom":
       default:
         console.log(check, text);
     }
   }
+
+  return {
+    content: text,
+    messages: evalMessages,
+    model: model.modelId,
+    provider: model.provider,
+    durationMS: durMs,
+    checks: results,
+  };
 };
 
 export const aligned = async (
   text: string,
   aligned: AlignmentCheck,
   prompt: Prompt,
-) : Promise<boolean> => {
+): Promise<CheckResult> => {
+  const model = aligned.model ?? prompt.model ?? defaultEvalModel;
   const { object } = await generateObject({
-    model: loadModel(aligned.model ?? prompt.model ?? defaultEvalModel)!,
-    system: `Your task is determine whether the user's message aligned with the expected value. User your best judgment.`,
+    model: loadModel(model)!,
+    system: `Your task is determine whether the user's message aligned with the expected value. Use your best judgment.`,
     messages: [
       {
-        role: 'assistant',
-        content: aligned.instructions
+        role: "assistant",
+        content: aligned.instructions,
       },
       {
         role: "user",
-        content: text
-      }
+        content: text,
+      },
     ],
     schema: z.object({
-      aligned: z.boolean().describe("Whether or not the supplied text matches what the user wanted.")
-    })
+      aligned: z
+        .boolean()
+        .describe(
+          "Whether or not the supplied text matches what the user wanted.",
+        ),
+    }),
   });
-  return object.aligned;
-}
+  return {
+    success: object.aligned,
+    name: aligned.id,
+    data: {
+      model,
+    },
+  };
+};
 
 export const exactMatch = async (
   text: string,
   exactMatch: ExactMatch,
-) : Promise<boolean> => {
-  if (exactMatch.case_insensitive) {
-    return text.toLowerCase() === exactMatch.value.toLowerCase();
-  }
-  return text === exactMatch.value;
-}
+): Promise<CheckResult> => {
+  const isMatch = exactMatch.case_insensitive
+    ? text.toLowerCase() === exactMatch.value.toLowerCase()
+    : text === exactMatch.value;
+  return {
+    success: isMatch,
+    name: exactMatch.id,
+    data: {
+      case_insensitive: exactMatch.case_insensitive,
+    },
+  };
+};
 
 export const profanityCheck = async (
   text: string,
   check: ProfanityCheck,
   prompt: Prompt,
-): Promise<boolean> => {
+): Promise<CheckResult> => {
+  const model = prompt.model ?? prompt.model ?? defaultEvalModel;
   const { object } = await generateObject({
-    model: loadModel(prompt.model ?? prompt.model ?? defaultEvalModel)!,
+    model: loadModel(model)!,
     system: `Your task is determine whether the user's message includes any profanity or vulgar words.
     
 Here's a list of words that must not be included in any form: ${JSON.stringify(check.forbidden ?? [])}`,
     messages: [
       {
         role: "user",
-        content: text
-      }
+        content: text,
+      },
     ],
     schema: z.object({
-      has_profanity: z.boolean().describe("Whether the supplied text includes the profanity or vulgar expressions.")
-    })
+      has_profanity: z
+        .boolean()
+        .describe(
+          "Whether the supplied text includes the profanity or vulgar expressions.",
+        ),
+    }),
   });
-  return object.has_profanity;
+  return {
+    success: !object.has_profanity,
+    name: check.id,
+    data: {
+      forbidden: check.forbidden,
+      model,
+    },
+  };
 };
