@@ -1,8 +1,15 @@
 import { z } from "zod";
 import { models } from "./models";
 
-export const profanityCheck = z
-  .object({
+const baseCheck = z.object({
+  name: z
+    .string()
+    .describe("An optional name describing the check.")
+    .optional(),
+});
+
+export const profanityCheck = baseCheck
+  .extend({
     id: z.literal("profanity"),
     model: models.optional(),
     forbidden: z
@@ -18,8 +25,8 @@ export const profanityCheck = z
 
 export type ProfanityCheck = z.infer<typeof profanityCheck>;
 
-export const alignmentCheck = z
-  .object({
+export const alignmentCheck = baseCheck
+  .extend({
     id: z.literal("aligned"),
     model: models.optional(),
     instructions: z
@@ -33,8 +40,8 @@ export const alignmentCheck = z
 
 export type AlignmentCheck = z.infer<typeof alignmentCheck>;
 
-export const exactMatch = z
-  .object({
+export const exactMatch = baseCheck
+  .extend({
     id: z.literal("exact_match"),
     value: z.string().describe("The exact match to check against."),
     case_insensitive: z
@@ -47,7 +54,31 @@ export const exactMatch = z
 
 export type ExactMatch = z.infer<typeof exactMatch>;
 
-export const customCheck = z.object({
+export const toolCall = baseCheck
+  .extend({
+    id: z.literal("tool_call"),
+    tool_calls: z.array(
+      z.object({
+        tool_name: z.string().describe("the name of the tool called"),
+        args: z
+          .union([
+            z.string(),
+            z.record(z.string(), z.any()),
+            z.null(),
+            z.number(),
+            z.boolean(),
+            z.array(z.any()),
+          ])
+          .describe("the arguments passed for the tool call."),
+      }),
+    ),
+  })
+  .strict()
+  .describe("Determine if a tool call is made appropriately.");
+
+export type ToolCall = z.infer<typeof toolCall>;
+
+export const customCheck = baseCheck.extend({
   id: z.literal("custom"),
   model: models.optional(),
   arguments: z.any(),
@@ -56,9 +87,13 @@ export const customCheck = z.object({
 export type CustomCheck = z.infer<typeof customCheck>;
 
 export const check = z.discriminatedUnion("id", [
+  // Built ins
   profanityCheck,
   alignmentCheck,
   exactMatch,
+  toolCall,
+
+  // Custom
   customCheck,
 ]);
 
