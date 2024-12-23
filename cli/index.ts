@@ -3,9 +3,14 @@ import fs from "node:fs";
 import fsp from "node:fs/promises";
 
 import { program, Option } from "@commander-js/extra-typings";
-import { languageCompilers, isSupportedLanguage } from "./compile";
+import {
+  languageCompilers,
+  isSupportedLanguage,
+  CompileConfig,
+} from "./compile";
 import { loadPrompts } from "./utils/load";
 import { runEvals } from "./commands/eval";
+import { writeFiles } from "./compile/write";
 
 const languages = Object.keys(languageCompilers);
 
@@ -66,13 +71,16 @@ program
 
     await fsp.mkdir(outDir, { recursive: true });
 
-    const res = await languageCompilers[language]!({
+    const cfg: CompileConfig = {
       lang: language,
       outDir: outDir,
       packageDir: packageDir!,
       prompts: await loadPrompts({ baseDir, glob: match }),
-    });
+    };
+
+    const res = await languageCompilers[language]!(cfg);
     if (res.success) {
+      await writeFiles(cfg, res.files);
       console.log(`Successfully compiled prompts to ${outDir}`);
       process.exit(0);
     }

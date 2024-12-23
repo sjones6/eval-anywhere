@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+import { ZodTypeAny } from "zod";
+
+=======
+import type { ZodTypeAny } from "zod";
+>>>>>>> da7c42c (refactor file handling)
 export type EvalAnywherePrompt = {
   /** The name of the prompt. For output, this will be turned into camel case. */
   name: string;
@@ -196,8 +202,12 @@ export type EvalAnywherePrompt = {
         name: string;
         /** The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool. */
         description: string;
+<<<<<<< HEAD
         /** A JSON schema definition of how the tool parameters should be constructed. */
-        parameters: string;
+=======
+        /** the parameters for the function call. Either the schema inlined or a path to a file to load it. */
+>>>>>>> da7c42c (refactor file handling)
+        parameters: ZodTypeAny;
       }[]
     | undefined;
 };

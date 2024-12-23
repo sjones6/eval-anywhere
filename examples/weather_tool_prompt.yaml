@@ -8,18 +8,27 @@ model: openai@gpt-4o-mini
 tools:
   - name: get_current_weather
     description: Gets info about the current weather at a given location.
+    parameters:
+      path: ./tools/get_weather.json
+  - name: get_hurricanes
+    description: Gets a list of hurricanes given a time period
     parameters: |-
       {
-          "type": "object",
-          "properties": {
-              "location": {
-                  "type": "string",
-                  "description": "The city and state, e.g. San Francisco, CA"
-              },
-              "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}
-          },
-          "required": ["location"],
-          "additionalProperties": false
+        "type": "object",
+        "properties": {
+            "start_date": {
+                "type": "string",
+                "format": "date",
+                "description": "The start date (inclusive) to search for hurricanes from."
+            },
+            "end_date": {
+                "type": "string",
+                "format": "date",
+                "description": "The final date (inclusive) to stop searching for hurricanes from."
+            }
+        },
+        "required": ["start_date", "end_date"],
+        "additionalProperties": false
       }
 
 system_prompt: |-

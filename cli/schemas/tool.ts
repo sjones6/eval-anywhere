@@ -1,5 +1,27 @@
 import { z } from "zod";
 
+export const toolParameters = z
+  .union([
+    z
+      .string()
+      .describe(
+        "A JSON schema definition of how the tool parameters should be constructed.",
+      ),
+    z.object({
+      path: z
+        .string()
+        .regex(/^.*\.json$/, "must be a json file")
+        .describe(
+          "A relative path from the prompt file or absolute path to the JSON schema",
+        ),
+    }),
+  ])
+  .describe(
+    "the parameters for the function call. Either the schema inlined or a path to a file to load it.",
+  );
+
+export type ToolParameters = z.infer<typeof toolParameters>;
+
 export const tool = z
   .object({
     name: z
@@ -12,11 +34,7 @@ export const tool = z
       .describe(
         "The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool.",
       ),
-    parameters: z
-      .string()
-      .describe(
-        "A JSON schema definition of how the tool parameters should be constructed.",
-      ),
+    parameters: toolParameters,
   })
   .strict();
 export type Tool = z.infer<typeof tool>;

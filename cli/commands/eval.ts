@@ -2,8 +2,8 @@ import {
   CoreTool,
   generateObject,
   generateText,
-  LanguageModelV1,
   jsonSchema,
+  LanguageModelV1,
 } from "ai";
 import { loadModel } from "../utils/models.js";
 import z from "zod";
@@ -16,9 +16,9 @@ import {
   ProfanityCheck,
   ToolCall as ToolCallCheck,
 } from "../schemas/check";
-import { Prompt } from "../schemas/prompt";
 import { Message } from "../schemas/message";
 import { isEqual } from "lodash";
+import { ResolvedPrompt, ResolvedPromptWithPath } from "../utils/load.js";
 
 const checksSchema = z.array(check).min(1);
 
@@ -40,19 +40,20 @@ export type EvaluationResult = {
 };
 
 export type PromptWithResults = {
-  prompt: Prompt;
+  prompt: ResolvedPrompt;
   evaluationResults: EvaluationResult[];
 };
 
 export const runEvals = async ({
   prompts,
 }: {
-  prompts: Prompt[];
+  prompts: ResolvedPromptWithPath[];
 }): Promise<PromptWithResults[]> => {
   const promptResults: PromptWithResults[] = [];
 
   try {
-    for (const { evaluation, ...prompt } of prompts) {
+    for (const promptWithPath of prompts) {
+      const { evaluation, ...prompt } = promptWithPath.prompt;
       if (!evaluation?.evaluations.length) {
         console.warn(chalk.bgMagenta(`No evals for ${prompt.name}`));
         continue;
@@ -123,7 +124,7 @@ const runEvaluationChecks = async ({
   checks: Check[];
   evalMessages: Message[];
   model: LanguageModelV1;
-  prompt: Prompt;
+  prompt: ResolvedPrompt;
 }): Promise<EvaluationResult> => {
   const start = Date.now();
   const { text, toolCalls } = await generateText({
@@ -141,7 +142,7 @@ const runEvaluationChecks = async ({
             (tools, tool) => {
               tools[tool.name] = {
                 description: tool.description,
-                parameters: jsonSchema(JSON.parse(tool.parameters.trim())),
+                parameters: jsonSchema(tool.parameters),
               };
               return tools;
             },
@@ -189,7 +190,7 @@ const runEvaluationChecks = async ({
 export const aligned = async (
   text: string,
   aligned: AlignmentCheck,
-  prompt: Prompt,
+  prompt: ResolvedPrompt,
 ): Promise<CheckResult> => {
   const model = aligned.model ?? prompt.model ?? defaultEvalModel;
   const { object } = await generateObject({
@@ -241,7 +242,7 @@ export const exactMatch = async (
 export const profanityCheck = async (
   text: string,
   check: ProfanityCheck,
-  prompt: Prompt,
+  prompt: ResolvedPrompt,
 ): Promise<CheckResult> => {
   const model = prompt.model ?? prompt.model ?? defaultEvalModel;
   const { object } = await generateObject({

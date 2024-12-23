@@ -1,4 +1,4 @@
-import { Prompt } from "../schemas/prompt";
+import { ResolvedPromptWithPath } from "../utils/load";
 
 export type Lang = string;
 
@@ -8,11 +8,25 @@ export type CompileConfig = {
   outDir: string;
   packageDir: string;
   lang: Lang;
-  prompts: Prompt[];
+  prompts: ResolvedPromptWithPath[];
+};
+
+export type OutputFile = {
+  lang: Lang;
+  path: string;
+  contents: string;
+};
+
+export type OutputFile = {
+  lang: Lang;
+  path: string;
+  contents: string;
 };
 
 export type CompileFn = {
   (
     cfg: CompileConfig,
-  ): Promise<{ success: true } | { success: false; error: Error }>;
+  ): Promise<
+    { success: true; files: OutputFile[] } | { success: false; error: Error }
+  >;
 };

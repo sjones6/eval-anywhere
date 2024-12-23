@@ -7,6 +7,9 @@ import { message } from "../cli/schemas/message";
 import { tool } from "../cli/schemas/tool";
 import { evaluation } from "../cli/schemas/evaluation";
 import { messages, prompt, promptNoEval } from "../cli/schemas/prompt";
+import * as prettier from "prettier";
+
+import { Project, ts } from 'ts-morph';
 
 import { zodToTs, printNode, createTypeAlias } from "zod-to-ts";
 
@@ -80,10 +83,48 @@ writeSchema(
 /**
  * Using prompt without the eval since we don't want evals to show up
  * in the prompts that are written out.
+ * 
+ * Also, replacing schema definition with 
  */
-const { node } = zodToTs(promptNoEval, "EvalAnywherePrompt");
+const typeAlias = "EvalAnywherePrompt";
+const { node } = zodToTs(promptNoEval, typeAlias);
+const aliasedNode = createTypeAlias(node, typeAlias);
 
-fs.writeFileSync(
-  path.join(process.cwd(), "templates", "typescript", "types.ts"),
-  `export ${printNode(createTypeAlias(node, "EvalAnywherePrompt"))}`,
+const project = new Project();
+const sourceFile = project.createSourceFile(
+  `${typeAlias}.ts`,
+  `export ${printNode(aliasedNode, {})}`,
 );
+
+sourceFile.addImportDeclaration({
+  isTypeOnly: true,
+  namedImports: ["ZodTypeAny"],
+  moduleSpecifier: "zod"
+})
+
+sourceFile.transform(traversal => {
+  const node = traversal.visitChildren();
+  if (
+    ts.isPropertySignature(node) &&
+    ts.isIdentifier(node.name) &&
+    node.name.text === "parameters"
+  ) {
+    return traversal.factory.updatePropertySignature(
+      node,
+      node.modifiers,
+      node.name,
+      node.questionToken,
+      traversal.factory.createTypeReferenceNode("ZodTypeAny", [])
+    )
+  }
+  return node;
+});
+
+(async () => {
+  fs.writeFileSync(
+    path.join(process.cwd(), "templates", "typescript", "types.ts"),
+    await prettier.format(sourceFile.print(), {
+      parser: "typescript",
+    })
+  );
+})();

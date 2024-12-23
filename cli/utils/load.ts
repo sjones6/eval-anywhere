@@ -1,10 +1,27 @@
 import fsp from "node:fs/promises";
+import fs from "node:fs";
 
 import z from "zod";
 
 import { parse } from "yaml";
-import { prompt, Prompt } from "../schemas/prompt";
+import { Prompt, prompt } from "../schemas/prompt";
 import { globSync } from "glob";
+import { Tool, ToolParameters } from "../schemas/tool";
+import path from "node:path";
+
+export type ResolvedTool = Omit<Tool, "parameters"> & {
+  parameters: Record<string, unknown>;
+};
+
+export type ResolvedPrompt = Omit<Prompt, "tools"> & {
+  tools: ResolvedTool[];
+};
+
+export type ResolvedPromptWithPath = {
+  /** The absolute path to the prompt */
+  path: string;
+  prompt: ResolvedPrompt;
+};
 
 const loadFileWithSchema = async <Schema extends z.ZodTypeAny>(
   file: string,
@@ -28,8 +45,8 @@ export const loadPrompts = async ({
 }: {
   baseDir: string;
   glob: string;
-}): Promise<Prompt[]> => {
-  const prompts: Prompt[] = [];
+}): Promise<ResolvedPromptWithPath[]> => {
+  const prompts: ResolvedPromptWithPath[] = [];
 
   const files = globSync(`${baseDir}/${glob}`, {
     cwd: baseDir,
@@ -42,14 +59,52 @@ export const loadPrompts = async ({
   }
 
   for (const file of files) {
-    const loadedPrompt = await loadFileWithSchema(file.fullpath(), prompt);
+    const absFilePath = file.fullpath();
+    const loadedPrompt = await loadFileWithSchema(absFilePath, prompt);
 
     if (!loadedPrompt) {
       throw new Error(`failed to parse prompt: ${file.fullpath()}`);
     }
 
-    prompts.push(loadedPrompt);
+    prompts.push({
+      path: absFilePath,
+      prompt: {
+        ...loadedPrompt,
+        tools: (loadedPrompt.tools ?? []).map((tool) => {
+          return {
+            ...tool,
+            parameters: loadToolParameters({
+              cwd: path.dirname(absFilePath),
+              parameters: tool.parameters,
+            }),
+          };
+        }),
+      },
+    });
   }
 
   return prompts;
+};
+
+export const loadToolParameters = ({
+  parameters,
+  cwd,
+}: {
+  parameters: ToolParameters;
+  cwd: string;
+}): Record<string, unknown> => {
+  try {
+    if (typeof parameters === "string") {
+      return JSON.parse(parameters.trim());
+    }
+    if (!!parameters.path) {
+      return JSON.parse(
+        fs.readFileSync(path.join(cwd, parameters.path), "utf-8").trim(),
+      );
+    }
+  } catch (err) {
+    console.error("failed to load tool parameters", err);
+    throw err;
+  }
+  throw new Error("Should not hit this. This is a developer error.");
 };
