@@ -11,8 +11,16 @@ export type CompileConfig = {
   prompts: Prompt[];
 };
 
+export type OutputFile = {
+  lang: Lang;
+  path: string;
+  contents: string;
+};
+
 export type CompileFn = {
   (
     cfg: CompileConfig,
-  ): Promise<{ success: true } | { success: false; error: Error }>;
+  ): Promise<
+    { success: true; files: OutputFile[] } | { success: false; error: Error }
+  >;
 };

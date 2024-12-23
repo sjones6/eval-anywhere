@@ -85,5 +85,7 @@ const { node } = zodToTs(promptNoEval, "EvalAnywherePrompt");
 
 fs.writeFileSync(
   path.join(process.cwd(), "templates", "typescript", "types.ts"),
-  `export ${printNode(createTypeAlias(node, "EvalAnywherePrompt"))}`,
+  `import { ZodTypeAny } from 'zod';
+
+export ${printNode(createTypeAlias(node, "EvalAnywherePrompt")).replace("parameters: string;", "parameters: ZodTypeAny;")}`,
 );
