@@ -1,3 +1,5 @@
+import { ZodTypeAny } from "zod";
+
 export type EvalAnywherePrompt = {
   /** The name of the prompt. For output, this will be turned into camel case. */
   name: string;
@@ -197,7 +199,7 @@ export type EvalAnywherePrompt = {
         /** The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool. */
         description: string;
         /** A JSON schema definition of how the tool parameters should be constructed. */
-        parameters: string;
+        parameters: ZodTypeAny;
       }[]
     | undefined;
 };
