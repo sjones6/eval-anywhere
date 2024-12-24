@@ -4,6 +4,8 @@ export type Lang = string;
 
 export const typescript: Lang = "typescript" as const;
 
+export const deno: Lang = "deno" as const;
+
 export type CompileConfig = {
   outDir: string;
   packageDir: string;
