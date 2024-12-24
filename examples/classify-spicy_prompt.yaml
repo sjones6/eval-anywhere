@@ -10,7 +10,7 @@ system_prompt: |-
 
   Reply just with the word "spicy" if the food is normally spicy.
 
-  Or, reply with "bland" if not.
+  Or, reply with "bland" if not!
 
 evaluation:
   evaluations:
