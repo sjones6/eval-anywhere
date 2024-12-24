@@ -17,12 +17,6 @@ export type OutputFile = {
   contents: string;
 };
 
-export type OutputFile = {
-  lang: Lang;
-  path: string;
-  contents: string;
-};
-
 export type CompileFn = {
   (
     cfg: CompileConfig,

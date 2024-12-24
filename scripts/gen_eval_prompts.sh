@@ -10,4 +10,6 @@ pnpm build
 
 chmod +x ./dist/index.js
 
-./dist/index.js compile ./examples -o ./out/typescript -l typescript
+./dist/index.js compile ./cli/commands/prompts -o ./cli/commands/gen -l typescript
+
+pnpm fmt

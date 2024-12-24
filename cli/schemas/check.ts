@@ -78,6 +78,30 @@ export const toolCall = baseCheck
 
 export type ToolCall = z.infer<typeof toolCall>;
 
+export const structuredOutputCheck = baseCheck
+  .extend({
+    id: z.literal("structured_output"),
+    result: z
+      .union([
+        z.string().describe("the JSON object"),
+        z
+          .object({
+            path: z
+              .string()
+              .describe(
+                "An absolute or relative path where the result can be loaded from",
+              ),
+          })
+          .describe("a path where the "),
+        z.any(),
+      ])
+      .describe("the arguments passed for the tool call."),
+  })
+  .strict()
+  .describe("Check structured ouptut for equivalence.");
+
+export type StructuredOutput = z.infer<typeof structuredOutputCheck>;
+
 export const customCheck = baseCheck.extend({
   id: z.literal("custom"),
   model: models.optional(),
@@ -92,6 +116,7 @@ export const check = z.discriminatedUnion("id", [
   alignmentCheck,
   exactMatch,
   toolCall,
+  structuredOutputCheck,
 
   // Custom
   customCheck,

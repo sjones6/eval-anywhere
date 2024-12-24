@@ -6,15 +6,61 @@ import z from "zod";
 import { parse } from "yaml";
 import { Prompt, prompt } from "../schemas/prompt";
 import { globSync } from "glob";
-import { Tool, ToolParameters } from "../schemas/tool";
+import { Tool } from "../schemas/tool";
 import path from "node:path";
+import {
+  AlignmentCheck,
+  Check,
+  CustomCheck,
+  ExactMatch,
+  ProfanityCheck,
+  StructuredOutput,
+  ToolCall,
+} from "../schemas/check";
+import { Evaluation, EvaluationCheck } from "../schemas/evaluation";
+
+export type JSONValue =
+  | null
+  | string
+  | number
+  | boolean
+  | {
+      [value: string]: JSONValue;
+    }
+  | Array<JSONValue>;
+
+export type ResolvedStructuredOutput = Omit<StructuredOutput, "result"> & {
+  result: JSONValue;
+};
+
+export type ResolvedCheck =
+  | ResolvedStructuredOutput
+  | ProfanityCheck
+  | AlignmentCheck
+  | CustomCheck
+  | ToolCall
+  | ExactMatch;
+
+export type ResolvedEvaluationCase = Omit<EvaluationCheck, "checks"> & {
+  checks: ResolvedCheck[];
+};
+
+export type ResolvedEvaluationSuite = Omit<
+  Evaluation,
+  "checks" | "evaluations"
+> & {
+  evaluations: ResolvedEvaluationCase[];
+  checks: ResolvedCheck[];
+};
 
 export type ResolvedTool = Omit<Tool, "parameters"> & {
   parameters: Record<string, unknown>;
 };
 
-export type ResolvedPrompt = Omit<Prompt, "tools"> & {
+export type ResolvedPrompt = Omit<Prompt, "tools" | "schema" | "evaluation"> & {
   tools: ResolvedTool[];
+  schema: Record<string, unknown> | undefined;
+  evaluation: ResolvedEvaluationSuite | undefined;
 };
 
 export type ResolvedPromptWithPath = {
@@ -37,6 +83,76 @@ const loadFileWithSchema = async <Schema extends z.ZodTypeAny>(
   }
 
   return parsedContents.data;
+};
+
+const resolveJSON = ({
+  parameters,
+  cwd,
+}: {
+  parameters:
+    | {
+        path: string;
+      }
+    | JSONValue;
+  cwd: string;
+}): JSONValue => {
+  try {
+    if (
+      typeof parameters === "object" &&
+      !!parameters &&
+      "path" in parameters &&
+      typeof parameters.path === "string" &&
+      !!parameters.path &&
+      parameters.path.endsWith(".json")
+    ) {
+      return JSON.parse(
+        fs.readFileSync(path.join(cwd, parameters.path), "utf-8").trim(),
+      );
+    }
+    if (typeof parameters === "string") {
+      return JSON.parse(parameters.trim());
+    }
+    return parameters;
+  } catch (err) {
+    console.error("failed to load tool parameters", err);
+    throw err;
+  }
+  throw new Error("Should not hit this. This is a developer error.");
+};
+
+const resolveJSONSchema = ({
+  parameters,
+  cwd,
+}: {
+  parameters:
+    | {
+        path: string;
+      }
+    | JSONValue;
+  cwd: string;
+}): Record<string, unknown> => {
+  const loadedJSON = resolveJSON({
+    cwd,
+    parameters,
+  });
+
+  if (typeof loadedJSON === "object" && !!loadedJSON && "type" in loadedJSON) {
+    return loadedJSON;
+  }
+  throw new Error("Invalid JSON schema");
+};
+
+const resolveCheck = (cwd: string, check: Check): ResolvedCheck => {
+  if (check.id === "structured_output") {
+    return {
+      ...check,
+      result: resolveJSON({
+        cwd,
+        parameters: check.result,
+      }),
+    };
+  }
+  return check;
 };
 
 export const loadPrompts = async ({
@@ -66,6 +182,7 @@ export const loadPrompts = async ({
       throw new Error(`failed to parse prompt: ${file.fullpath()}`);
     }
 
+    const cwd = path.dirname(absFilePath);
     prompts.push({
       path: absFilePath,
       prompt: {
@@ -73,38 +190,40 @@ export const loadPrompts = async ({
         tools: (loadedPrompt.tools ?? []).map((tool) => {
           return {
             ...tool,
-            parameters: loadToolParameters({
-              cwd: path.dirname(absFilePath),
+            parameters: resolveJSONSchema({
+              cwd,
               parameters: tool.parameters,
             }),
           };
         }),
+        schema: loadedPrompt.schema
+          ? resolveJSONSchema({
+              cwd,
+              parameters: loadedPrompt.schema,
+            })
+          : undefined,
+        evaluation: loadedPrompt.evaluation
+          ? {
+              ...loadedPrompt.evaluation,
+              checks: (loadedPrompt.evaluation.checks ?? []).map((check) =>
+                resolveCheck(cwd, check),
+              ),
+              evaluations: loadedPrompt.evaluation.evaluations.map(
+                (evaluation) => {
+                  return {
+                    name: evaluation.name,
+                    messages: evaluation.messages,
+                    checks: (evaluation.checks ?? []).map((check) =>
+                      resolveCheck(cwd, check),
+                    ),
+                  };
+                },
+              ),
+            }
+          : undefined,
       },
     });
   }
 
   return prompts;
-};
-
-export const loadToolParameters = ({
-  parameters,
-  cwd,
-}: {
-  parameters: ToolParameters;
-  cwd: string;
-}): Record<string, unknown> => {
-  try {
-    if (typeof parameters === "string") {
-      return JSON.parse(parameters.trim());
-    }
-    if (!!parameters.path) {
-      return JSON.parse(
-        fs.readFileSync(path.join(cwd, parameters.path), "utf-8").trim(),
-      );
-    }
-  } catch (err) {
-    console.error("failed to load tool parameters", err);
-    throw err;
-  }
-  throw new Error("Should not hit this. This is a developer error.");
 };

@@ -48,6 +48,23 @@ export const promptNoEval = z
       .min(1)
       .describe("A list of tools available to the prompt")
       .optional(),
+    schema: z
+      .union([
+        z
+          .string()
+          .describe(
+            "A JSON schema definition of how the schema of the response.",
+          ),
+        z.object({
+          path: z
+            .string()
+            .regex(/^.*\.json$/, "must be a json file")
+            .describe(
+              "A relative path from the prompt file or absolute path to the JSON schema",
+            ),
+        }),
+      ])
+      .optional(),
   })
   .strict()
   .describe(

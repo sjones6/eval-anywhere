@@ -6,12 +6,14 @@
     "eval-anywhere": "./dist/cli.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "./scripts/build.sh",
     "compile:examples": "./scripts/test_compile.sh",
+    "eval:eval-prompts": "./scripts/eval_eval_prompts.sh",
     "eval:examples": "./scripts/run_evals.sh",
+    "fmt": "prettier --write .",
+    "gen:eval-prompts": "./scripts/gen_eval_prompts.sh",
     "gen": "./scripts/gen.sh",
-    "fmt": "prettier --write ."
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "llms",
