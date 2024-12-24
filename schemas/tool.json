@@ -1,25 +1,48 @@
 {
-  "$ref": "#/$defs/EvalAnywhereTool",
-  "$defs": {
-    "EvalAnywhereTool": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the tool function. This should be descriptive as to what the tool does."
-        },
-        "description": {
-          "type": "string",
-          "description": "The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool."
-        },
-        "parameters": {
-          "type": "string",
-          "description": "A JSON schema definition of how the tool parameters should be constructed."
+    "$ref": "#/$defs/EvalAnywhereTool",
+    "$defs": {
+        "EvalAnywhereTool": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the tool function. This should be descriptive as to what the tool does."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool."
+                },
+                "parameters": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "description": "A JSON schema definition of how the tool parameters should be constructed."
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "path": {
+                                    "type": "string",
+                                    "pattern": "^.*\\.json$",
+                                    "description": "A relative path from the prompt file or absolute path to the JSON schema"
+                                }
+                            },
+                            "required": [
+                                "path"
+                            ],
+                            "additionalProperties": false
+                        }
+                    ],
+                    "description": "the parameters for the function call. Either the schema inlined or a path to a file to load it."
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "parameters"
+            ],
+            "additionalProperties": false
         }
-      },
-      "required": ["name", "description", "parameters"],
-      "additionalProperties": false
-    }
-  },
-  "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
 }

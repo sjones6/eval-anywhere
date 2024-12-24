@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "description": "Gets the weath for a given city and state.",
+  "properties": {
+    "location": {
+      "type": "string",
+      "description": "The city and state, e.g. San Francisco, CA"
+    },
+    "unit": { "type": "string", "enum": ["celsius", "fahrenheit"] }
+  },
+  "required": ["location"],
+  "additionalProperties": false
+}
