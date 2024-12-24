@@ -5,7 +5,7 @@ import {
   jsonSchema,
   LanguageModelV1,
 } from "ai";
-import { loadModel } from "../utils/models.js";
+import { loadModel } from "../utils/models";
 import z from "zod";
 import chalk from "chalk";
 import {
@@ -14,11 +14,24 @@ import {
   check,
   ExactMatch,
   ProfanityCheck,
+  StructuredOutput,
   ToolCall as ToolCallCheck,
 } from "../schemas/check";
 import { Message } from "../schemas/message";
 import { isEqual } from "lodash";
-import { ResolvedPrompt, ResolvedPromptWithPath } from "../utils/load.js";
+import {
+  JSONValue,
+  ResolvedPrompt,
+  ResolvedPromptWithPath,
+} from "../utils/load";
+import {
+  evalOutputAlignmentPromptV1,
+  evalOutputAlignmentSchemaV1,
+} from "./gen/eval_output_alignment";
+import {
+  evalHasProfanityPromptV1,
+  evalHasProfanitySchemaV1,
+} from "./gen/eval_has_profanity";
 
 const checksSchema = z.array(check).min(1);
 
@@ -32,7 +45,7 @@ export type CheckResult = {
 
 export type EvaluationResult = {
   messages: Message[];
-  content: string;
+  content: string | Record<string, unknown>;
   model: string;
   provider: string;
   durationMS: number;
@@ -53,8 +66,8 @@ export const runEvals = async ({
 
   try {
     for (const promptWithPath of prompts) {
-      const { evaluation, ...prompt } = promptWithPath.prompt;
-      if (!evaluation?.evaluations.length) {
+      const prompt = promptWithPath.prompt;
+      if (!prompt.evaluation?.evaluations.length) {
         console.warn(chalk.bgMagenta(`No evals for ${prompt.name}`));
         continue;
       }
@@ -73,11 +86,11 @@ export const runEvals = async ({
       const evaluationResults: EvaluationResult[] = [];
 
       let i = 0;
-      for (const evalCase of evaluation.evaluations) {
+      for (const evalCase of prompt.evaluation.evaluations) {
         i++;
 
         const checksParsed = checksSchema.safeParse([
-          ...(evaluation.checks ?? []),
+          ...(prompt.evaluation.checks ?? []),
           ...(evalCase.checks ?? []),
         ]);
 
@@ -115,18 +128,30 @@ export const runEvals = async ({
   }
 };
 
-const runEvaluationChecks = async ({
+type RunEvalChecks = {
+  (args: {
+    checks: Check[];
+    evalMessages: Message[];
+    model: LanguageModelV1;
+    prompt: ResolvedPrompt;
+  }): Promise<EvaluationResult>;
+};
+
+const runEvaluationChecks: RunEvalChecks = async (args) => {
+  if (args.prompt.schema) {
+    return runObjectEval(args);
+  }
+  return runTextEval(args);
+};
+
+const runTextEval: RunEvalChecks = async ({
   checks,
   evalMessages,
   model,
   prompt,
-}: {
-  checks: Check[];
-  evalMessages: Message[];
-  model: LanguageModelV1;
-  prompt: ResolvedPrompt;
-}): Promise<EvaluationResult> => {
+}) => {
   const start = Date.now();
+
   const { text, toolCalls } = await generateText({
     model,
     system: prompt.system_prompt,
@@ -159,14 +184,25 @@ const runEvaluationChecks = async ({
 
   for (const check of checks) {
     switch (check.id) {
+      case "structured_output":
+        console.error(
+          chalk.bgYellow("WARNING") +
+            ": structured_output is not a valid check for text output. This is a no-op.",
+        );
+        results.push({
+          success: false,
+          name: check.name ?? check.id,
+          data: undefined,
+        });
+        break;
       case "profanity":
-        results.push(await profanityCheck(text, check, prompt));
+        results.push(await profanityCheck(text, check));
         break;
       case "exact_match":
         results.push(await exactMatch(text, check));
         break;
       case "aligned":
-        results.push(await aligned(text, check, prompt));
+        results.push(await aligned(text, check));
         break;
       case "tool_call":
         results.push(await toolCallCheck(check, toolCalls));
@@ -187,16 +223,84 @@ const runEvaluationChecks = async ({
   };
 };
 
+const runObjectEval: RunEvalChecks = async ({
+  checks,
+  evalMessages,
+  model,
+  prompt,
+}) => {
+  const start = Date.now();
+
+  const { object } = await generateObject({
+    model,
+    system: prompt.system_prompt,
+    messages: [
+      ...(prompt.few_shot_messages ?? []),
+      ...evalMessages,
+      ...(prompt.final_messages ?? []),
+    ],
+    schema: jsonSchema(prompt.schema!),
+  });
+  const durMs = Date.now() - start;
+
+  const results: CheckResult[] = [];
+
+  for (const check of checks) {
+    switch (check.id) {
+      case "profanity":
+        results.push(await profanityCheck(JSON.stringify(object), check));
+        break;
+      case "exact_match":
+        console.warn(
+          chalk.bgYellow("WARNING") +
+            ": exact_match uses stringified JSON for the match with structured output. Use `output` match instead.",
+        );
+        results.push(await exactMatch(JSON.stringify(object), check));
+        break;
+      case "aligned":
+        results.push(await aligned(JSON.stringify(object), check));
+        break;
+      case "tool_call":
+        console.warn(
+          chalk.bgYellow("WARNING") +
+            ": tool_call is not a valid check with structured output. Use output_match instead.",
+        );
+        results.push({
+          success: false,
+          name: check.name ?? check.id,
+          data: undefined,
+        });
+        break;
+      case "structured_output":
+        results.push(await structuredCheck(check, object as JSONValue));
+        break;
+      case "custom":
+      default:
+        console.log(check, object);
+    }
+  }
+
+  return {
+    content: object as Record<string, unknown>,
+    messages: evalMessages,
+    model: model.modelId,
+    provider: model.provider,
+    durationMS: durMs,
+    checks: results,
+  };
+};
+
 export const aligned = async (
   text: string,
   aligned: AlignmentCheck,
-  prompt: ResolvedPrompt,
 ): Promise<CheckResult> => {
-  const model = aligned.model ?? prompt.model ?? defaultEvalModel;
+  const model =
+    aligned.model ?? evalOutputAlignmentPromptV1.model ?? defaultEvalModel;
   const { object } = await generateObject({
     model: loadModel(model)!,
-    system: `Your task is determine whether the user's message aligned with the expected value. Use your best judgment.`,
+    system: evalOutputAlignmentPromptV1.system_prompt,
     messages: [
+      ...(evalOutputAlignmentPromptV1.few_shot_messages ?? []),
       {
         role: "assistant",
         content: aligned.instructions,
@@ -205,14 +309,9 @@ export const aligned = async (
         role: "user",
         content: text,
       },
+      ...(evalOutputAlignmentPromptV1.final_messages ?? []),
     ],
-    schema: z.object({
-      aligned: z
-        .boolean()
-        .describe(
-          "Whether or not the supplied text matches what the user wanted.",
-        ),
-    }),
+    schema: evalOutputAlignmentSchemaV1,
   });
   return {
     success: object.aligned,
@@ -242,27 +341,25 @@ export const exactMatch = async (
 export const profanityCheck = async (
   text: string,
   check: ProfanityCheck,
-  prompt: ResolvedPrompt,
 ): Promise<CheckResult> => {
-  const model = prompt.model ?? prompt.model ?? defaultEvalModel;
+  const model =
+    check.model ?? evalOutputAlignmentPromptV1.model ?? defaultEvalModel;
   const { object } = await generateObject({
     model: loadModel(model)!,
-    system: `Your task is determine whether the user's message includes any profanity or vulgar words.
-    
-Here's a list of words that must not be included in any form: ${JSON.stringify(check.forbidden ?? [])}`,
+    system: evalOutputAlignmentPromptV1.system_prompt,
     messages: [
+      ...(evalOutputAlignmentPromptV1.few_shot_messages ?? []),
+      {
+        role: "assistant",
+        content: `Here's a list of words that must not be included in any form: ${JSON.stringify(check.forbidden ?? [])}`,
+      },
       {
         role: "user",
         content: text,
       },
+      ...(evalHasProfanityPromptV1.final_messages ?? []),
     ],
-    schema: z.object({
-      has_profanity: z
-        .boolean()
-        .describe(
-          "Whether the supplied text includes the profanity or vulgar expressions.",
-        ),
-    }),
+    schema: evalHasProfanitySchemaV1,
   });
   return {
     success: !object.has_profanity,
@@ -304,4 +401,18 @@ export const toolCallCheck = async (
     );
   });
   return result;
+};
+
+export const structuredCheck = (
+  check: StructuredOutput,
+  result: JSONValue,
+): CheckResult => {
+  return {
+    success: isEqual(result, check.result),
+    name: check.name ?? check.id,
+    data: {
+      check: check.result,
+      result,
+    },
+  };
 };

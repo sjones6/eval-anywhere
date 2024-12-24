@@ -1,0 +1,88 @@
+# yaml-language-server: $schema=../../../schemas/prompt.yaml.json
+
+name: Eval Has Profanity
+version: 1
+
+model: openai@gpt-4o-mini
+
+system_prompt: |-
+  Your task is determine whether the user's message includes any profanity or vulgar words.
+
+  Religious words sometimes used as curse words, but used in their literal sense for their plain meaning, should not
+  be reported as profanity. Some examples include:
+  - hell
+  - damnation
+  - Jesus Christ
+
+  If a list of forbidden words is supplied, these should be considered as profanity and flagged as well, even
+  if not normally considered profane.
+
+  Think carefully, step-by-step.
+
+schema: |-
+  {
+    "type": "object",
+    "required": ["has_profanity"],
+    "additionalProperties": false,
+    "properties": {
+      "has_profanity": {
+        "type": "boolean",
+        "description": "Whether the supplied text includes the profanity or vulgar expressions, or forbidden words if supplied."
+      }
+    }
+  }
+
+evaluation:
+  evaluations:
+    - name: catches obvious issues
+      messages:
+        - role: user
+          content: "Mother fuckers!"
+      checks:
+        - id: structured_output
+          result:
+            has_profanity: true
+    - name: captures forbidden words
+      messages:
+        - role: assistant
+          content: |-
+            Here's a list of words that must not be included in any form: ["mutter"]
+        - role: user
+          content: |-
+            The afternoon sky was a canvas of moody grays, foretelling the storm that would soon break over the small coastal town.
+            Residents scurried to secure their homes, gathering supplies and reinforcing windows, aware of the chaos nature could unleash.
+            Just when they thought they were prepared, someone realized they forgot to buy batteries—typical, they muttered, what a load of bolgna.
+      checks:
+        - id: structured_output
+          result:
+            has_profanity: true
+    - name: flags crap (mildly vulgar)
+      messages:
+        - role: user
+          content: |-
+            The afternoon sky was a canvas of moody grays, foretelling the storm that would soon break over the small coastal town.
+            Residents scurried to secure their homes, gathering supplies and reinforcing windows, aware of the chaos nature could unleash.
+            Just when they thought they were prepared, someone realized they forgot to buy batteries—typical, they muttered, what a load of crap.
+      checks:
+        - id: structured_output
+          result:
+            has_profanity: true
+    - name: does not flag words used in religious contexts
+      messages:
+        - role: user
+          content: |-
+            In the theological framework of many religions, the concept of hell serves as a pivotal doctrine, outlining the consequences
+            for those who stray from the path of righteousness. This place, often depicted as a realm of eternal torment and separation
+            from divine grace, is believed to be reserved for souls who have committed grievous sins without seeking forgiveness. 
+
+            Such imagery has been used for centuries to instill a sense of moral urgency and spiritual caution in the hearts of believers,
+            emphasizing the stark choices between salvation and damnation.
+
+            The descriptions of hell vary significantly across different religious texts, but common themes of fire, darkness, and endless
+            despair permeate these accounts. In Christianity, for instance, hell is often portrayed as a fiery lake where souls face divine
+            retribution under the watchful eyes of demons. This stark depiction aims to remind the faithful of the severe repercussions of
+            turning away from God's commandments and the ultimate importance of living a life in accordance with divine laws.
+      checks:
+        - id: structured_output
+          result:
+            has_profanity: false

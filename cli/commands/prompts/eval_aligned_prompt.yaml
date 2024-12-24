@@ -1,0 +1,52 @@
+# yaml-language-server: $schema=../../../schemas/prompt.yaml.json
+
+name: Eval Output Alignment
+version: 1
+
+model: openai@gpt-4o-mini
+
+system_prompt: |-
+  Your task is determine whether the user's message aligned with the expected value. Use your best judgment.
+
+schema: |-
+  {
+    "type": "object",
+    "required": ["aligned"],
+    "additionalProperties": false,
+    "properties": {
+      "aligned": {
+        "type": "boolean",
+        "description": "Whether or not the supplied text matches what the user wanted."
+      }
+    }
+  }
+
+evaluation:
+  evaluations:
+    - messages:
+        - role: "assistant"
+          content: "is the users message about cooking or culinary topics?"
+        - role: "user"
+          content: "I'm looking for my grandmothers special cinnamon rolls"
+      checks:
+        - id: structured_output
+          result:
+            aligned: true
+    - messages:
+        - role: "assistant"
+          content: "Does the user mention scientific research?"
+        - role: "user"
+          content: "During Yann Lecunn's 2020 lecture at Oxford, he mentions the possibility of AGI."
+      checks:
+        - id: structured_output
+          result:
+            aligned: false
+    - messages:
+        - role: "assistant"
+          content: "Is the result in Spanish?"
+        - role: "user"
+          content: "My name is John Galt."
+      checks:
+        - id: structured_output
+          result:
+            aligned: false

@@ -9,7 +9,7 @@ import { evaluation } from "../cli/schemas/evaluation";
 import { messages, prompt, promptNoEval } from "../cli/schemas/prompt";
 import * as prettier from "prettier";
 
-import { Project, ts } from 'ts-morph';
+import { Project, ts } from "ts-morph";
 
 import { zodToTs, printNode, createTypeAlias } from "zod-to-ts";
 
@@ -83,8 +83,8 @@ writeSchema(
 /**
  * Using prompt without the eval since we don't want evals to show up
  * in the prompts that are written out.
- * 
- * Also, replacing schema definition with 
+ *
+ * Also, replacing schema definition with
  */
 const typeAlias = "EvalAnywherePrompt";
 const { node } = zodToTs(promptNoEval, typeAlias);
@@ -98,24 +98,25 @@ const sourceFile = project.createSourceFile(
 
 sourceFile.addImportDeclaration({
   isTypeOnly: true,
-  namedImports: ["ZodTypeAny"],
-  moduleSpecifier: "zod"
-})
+  namedImports: ["ZodSchema"],
+  moduleSpecifier: "zod",
+});
 
-sourceFile.transform(traversal => {
+sourceFile.transform((traversal) => {
   const node = traversal.visitChildren();
   if (
     ts.isPropertySignature(node) &&
     ts.isIdentifier(node.name) &&
-    node.name.text === "parameters"
+    // TODO: only swap type for tools.parameters.
+    ["parameters", "schema"].includes(node.name.text)
   ) {
     return traversal.factory.updatePropertySignature(
       node,
       node.modifiers,
       node.name,
       node.questionToken,
-      traversal.factory.createTypeReferenceNode("ZodTypeAny", [])
-    )
+      traversal.factory.createTypeReferenceNode("ZodSchema", []),
+    );
   }
   return node;
 });
@@ -125,6 +126,6 @@ sourceFile.transform(traversal => {
     path.join(process.cwd(), "templates", "typescript", "types.ts"),
     await prettier.format(sourceFile.print(), {
       parser: "typescript",
-    })
+    }),
   );
 })();
