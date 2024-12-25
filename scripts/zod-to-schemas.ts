@@ -115,7 +115,7 @@ sourceFile.transform((traversal) => {
         traversal.factory.createTypeReferenceNode("ZodSchema", []),
       );
     }
-    if (node.name.text === "parameters") {
+    if (node.name.text === "schema") {
       return traversal.factory.updatePropertySignature(
         node,
         node.modifiers,

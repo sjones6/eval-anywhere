@@ -23,12 +23,6 @@ export const evalOutputAlignmentPromptV1: EvalAnywherePrompt = {
     "Your task is determine whether the user's message aligned with the expected value. Use your best judgment.",
   few_shot_messages: [],
   final_messages: [],
-  tools: [
-    {
-      name: "eval_output_alignment",
-      description: "",
-      parameters: evalOutputAlignmentSchemaV1,
-    },
-  ],
+  tools: [],
   schema: evalOutputAlignmentSchemaV1,
 };

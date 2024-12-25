@@ -2,13 +2,13 @@
 
 set -eou pipefail
 
-rm -rf out
+pnpm build
 
 pnpm gen
 
-pnpm build
-
 chmod +x ./dist/cli/index.js
+
+rm -rf ./cli/commands/gen
 
 ./dist/cli/index.js compile ./cli/commands/prompts -o ./cli/commands/gen -l typescript
 

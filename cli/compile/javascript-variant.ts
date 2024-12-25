@@ -17,6 +17,7 @@ const nameToFileName = (str: string): string => {
 export type JavaScriptVariant = {
   lang: Lang;
   fileExtension: "js" | "ts";
+  includeFileExtensionInImports: boolean;
   module: "cjs" | "esm";
   includeTypes: boolean;
   zodPath: string;
@@ -27,6 +28,10 @@ export const javascriptVariant =
   async (cfg) => {
     try {
       const outputFiles: OutputFile[] = [];
+
+      const importExtension = variant.includeFileExtensionInImports
+        ? `.${variant.fileExtension}`
+        : "";
 
       if (variant.includeTypes) {
         // copy template files
@@ -59,11 +64,11 @@ export const javascriptVariant =
         const className =
           camelCase(prompt.name).replace(/(prompt)?$/i, "Prompt") +
           `V${version}`;
-        const filePath = nameToFileName(prompt.name);
+        const filePath = nameToFileName(prompt.name) + `_v${prompt.version}`;
         indexLines.push(
           variant.module === "esm"
-            ? `export { ${className} } from './${filePath}';`
-            : `const { ${className} } = require('./${filePath}');`,
+            ? `export { ${className} } from './${filePath}${importExtension}';`
+            : `const { ${className} } = require('./${filePath}${importExtension}');`,
         );
 
         const schemas = await Promise.all(
@@ -74,6 +79,7 @@ export const javascriptVariant =
               camelCaseName[0]?.toUpperCase() + camelCaseName.slice(1);
             return {
               name,
+              isTool: true,
               description: tool.description,
               snakeCaseName: snakeCase(name),
               camelCaseName,
@@ -102,6 +108,7 @@ export const javascriptVariant =
         if (prompt.schema) {
           schemas.push({
             name,
+            isTool: false,
             description: "",
             snakeCaseName: snakeCase(name),
             camelCaseName: camelCaseSchemaName,
@@ -122,7 +129,7 @@ export const javascriptVariant =
               ? `import { z } from '${variant.zodPath}';`
               : `const { z } = require('${variant.zodPath}')`,
           variant.includeTypes
-            ? `import type { EvalAnywherePrompt } from './types';`
+            ? `import type { EvalAnywherePrompt } from './types${importExtension}';`
             : false,
         ].filter((line) => typeof line === "string");
 
@@ -140,6 +147,7 @@ ${variant.module === "cjs" ? "module.exports." : "export const "}${className}${v
   final_messages: ${JSON.stringify(prompt.final_messages ?? [], null, 2)},
   tools: [
     ${schemas
+      .filter(({ isTool }) => isTool)
       .map(
         (tool) => `{
       name: ${JSON.stringify(tool.snakeCaseName)},
@@ -163,7 +171,7 @@ ${variant.module === "cjs" ? "module.exports." : "export const "}${className}${v
         path: `index.${variant.fileExtension}`,
         lang: variant.lang,
         contents:
-          `${variant.includeTypes ? `export type { EvalAnywherePrompt } from './types';` : ""}
+          `${variant.includeTypes ? `export type { EvalAnywherePrompt } from './types${importExtension}';` : ""}
 ${indexLines.join("\n")}
 `.trim(),
       });
