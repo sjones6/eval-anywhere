@@ -207,22 +207,14 @@ export type EvalAnywherePrompt = {
         parameters: ZodSchema;
       }[]
     | undefined;
-  schema?:
-    | (
-        | string
-        | {
-            /** A relative path from the prompt file or absolute path to the JSON schema */
-            path: string;
-          }
-      )
-    | undefined;
+  schema?: ZodSchema | undefined;
 };
 ",
       "lang": "typescript",
       "path": "types.ts",
     },
     {
-      "contents": "import type { EvalAnywherePrompt } from "./types";
+      "contents": "import type { EvalAnywherePrompt } from "./types.ts";
 
 export const simplePromptV0: EvalAnywherePrompt = {
   name: "simple prompt",
@@ -237,11 +229,11 @@ export const simplePromptV0: EvalAnywherePrompt = {
 };
 ",
       "lang": "typescript",
-      "path": "simple_prompt.ts",
+      "path": "simple_prompt_v0.ts",
     },
     {
       "contents": "import { z } from "https://deno.land/x/zod@v3.24.1/mod.ts";
-import type { EvalAnywherePrompt } from "./types";
+import type { EvalAnywherePrompt } from "./types.ts";
 
 export const toolASchema = z.object({ a: z.boolean().optional() });
 export type ToolASchema = z.infer<typeof toolASchema>;
@@ -265,11 +257,11 @@ export const withToolsPromptV0: EvalAnywherePrompt = {
 };
 ",
       "lang": "typescript",
-      "path": "with_tools.ts",
+      "path": "with_tools_v0.ts",
     },
     {
       "contents": "import { z } from "https://deno.land/x/zod@v3.24.1/mod.ts";
-import type { EvalAnywherePrompt } from "./types";
+import type { EvalAnywherePrompt } from "./types.ts";
 
 export const structuredOutputSchemaV0 = z.object({ a: z.boolean().optional() });
 export type StructuredOutputSchemaV0 = z.infer<typeof structuredOutputSchemaV0>;
@@ -282,24 +274,18 @@ export const structuredOutputPromptV0: EvalAnywherePrompt = {
   system_prompt: "system prompt",
   few_shot_messages: [],
   final_messages: [],
-  tools: [
-    {
-      name: "structured_output",
-      description: "",
-      parameters: structuredOutputSchemaV0,
-    },
-  ],
+  tools: [],
   schema: structuredOutputSchemaV0,
 };
 ",
       "lang": "typescript",
-      "path": "structured_output.ts",
+      "path": "structured_output_v0.ts",
     },
     {
-      "contents": "export type { EvalAnywherePrompt } from "./types";
-export { simplePromptV0 } from "./simple_prompt";
-export { withToolsPromptV0 } from "./with_tools";
-export { structuredOutputPromptV0 } from "./structured_output";
+      "contents": "export type { EvalAnywherePrompt } from "./types.ts";
+export { simplePromptV0 } from "./simple_prompt_v0.ts";
+export { withToolsPromptV0 } from "./with_tools_v0.ts";
+export { structuredOutputPromptV0 } from "./structured_output_v0.ts";
 ",
       "lang": "typescript",
       "path": "index.ts",
@@ -326,7 +312,7 @@ exports[`compilers > should compile 'node' 1`] = `
 };
 ",
       "lang": "node",
-      "path": "simple_prompt.js",
+      "path": "simple_prompt_v0.js",
     },
     {
       "contents": "const { z } = require("zod");
@@ -352,7 +338,7 @@ module.exports.withToolsPromptV0 = {
 };
 ",
       "lang": "node",
-      "path": "with_tools.js",
+      "path": "with_tools_v0.js",
     },
     {
       "contents": "const { z } = require("zod");
@@ -369,23 +355,17 @@ module.exports.structuredOutputPromptV0 = {
   system_prompt: "system prompt",
   few_shot_messages: [],
   final_messages: [],
-  tools: [
-    {
-      name: "structured_output",
-      description: "",
-      parameters: structuredOutputSchemaV0,
-    },
-  ],
+  tools: [],
   schema: structuredOutputSchemaV0,
 };
 ",
       "lang": "node",
-      "path": "structured_output.js",
+      "path": "structured_output_v0.js",
     },
     {
-      "contents": "const { simplePromptV0 } = require("./simple_prompt");
-const { withToolsPromptV0 } = require("./with_tools");
-const { structuredOutputPromptV0 } = require("./structured_output");
+      "contents": "const { simplePromptV0 } = require("./simple_prompt_v0");
+const { withToolsPromptV0 } = require("./with_tools_v0");
+const { structuredOutputPromptV0 } = require("./structured_output_v0");
 ",
       "lang": "node",
       "path": "index.js",
@@ -412,7 +392,7 @@ exports[`compilers > should compile 'node-cjs' 1`] = `
 };
 ",
       "lang": "node",
-      "path": "simple_prompt.js",
+      "path": "simple_prompt_v0.js",
     },
     {
       "contents": "const { z } = require("zod");
@@ -438,7 +418,7 @@ module.exports.withToolsPromptV0 = {
 };
 ",
       "lang": "node",
-      "path": "with_tools.js",
+      "path": "with_tools_v0.js",
     },
     {
       "contents": "const { z } = require("zod");
@@ -455,23 +435,17 @@ module.exports.structuredOutputPromptV0 = {
   system_prompt: "system prompt",
   few_shot_messages: [],
   final_messages: [],
-  tools: [
-    {
-      name: "structured_output",
-      description: "",
-      parameters: structuredOutputSchemaV0,
-    },
-  ],
+  tools: [],
   schema: structuredOutputSchemaV0,
 };
 ",
       "lang": "node",
-      "path": "structured_output.js",
+      "path": "structured_output_v0.js",
     },
     {
-      "contents": "const { simplePromptV0 } = require("./simple_prompt");
-const { withToolsPromptV0 } = require("./with_tools");
-const { structuredOutputPromptV0 } = require("./structured_output");
+      "contents": "const { simplePromptV0 } = require("./simple_prompt_v0");
+const { withToolsPromptV0 } = require("./with_tools_v0");
+const { structuredOutputPromptV0 } = require("./structured_output_v0");
 ",
       "lang": "node",
       "path": "index.js",
@@ -498,7 +472,7 @@ exports[`compilers > should compile 'node-esm' 1`] = `
 };
 ",
       "lang": "node",
-      "path": "simple_prompt.js",
+      "path": "simple_prompt_v0.js",
     },
     {
       "contents": "import { z } from "zod";
@@ -524,7 +498,7 @@ export const withToolsPromptV0 = {
 };
 ",
       "lang": "node",
-      "path": "with_tools.js",
+      "path": "with_tools_v0.js",
     },
     {
       "contents": "import { z } from "zod";
@@ -539,23 +513,17 @@ export const structuredOutputPromptV0 = {
   system_prompt: "system prompt",
   few_shot_messages: [],
   final_messages: [],
-  tools: [
-    {
-      name: "structured_output",
-      description: "",
-      parameters: structuredOutputSchemaV0,
-    },
-  ],
+  tools: [],
   schema: structuredOutputSchemaV0,
 };
 ",
       "lang": "node",
-      "path": "structured_output.js",
+      "path": "structured_output_v0.js",
     },
     {
-      "contents": "export { simplePromptV0 } from "./simple_prompt";
-export { withToolsPromptV0 } from "./with_tools";
-export { structuredOutputPromptV0 } from "./structured_output";
+      "contents": "export { simplePromptV0 } from "./simple_prompt_v0";
+export { withToolsPromptV0 } from "./with_tools_v0";
+export { structuredOutputPromptV0 } from "./structured_output_v0";
 ",
       "lang": "node",
       "path": "index.js",
@@ -772,15 +740,7 @@ export type EvalAnywherePrompt = {
         parameters: ZodSchema;
       }[]
     | undefined;
-  schema?:
-    | (
-        | string
-        | {
-            /** A relative path from the prompt file or absolute path to the JSON schema */
-            path: string;
-          }
-      )
-    | undefined;
+  schema?: ZodSchema | undefined;
 };
 ",
       "lang": "typescript",
@@ -802,7 +762,7 @@ export const simplePromptV0: EvalAnywherePrompt = {
 };
 ",
       "lang": "typescript",
-      "path": "simple_prompt.ts",
+      "path": "simple_prompt_v0.ts",
     },
     {
       "contents": "import { z } from "zod";
@@ -830,7 +790,7 @@ export const withToolsPromptV0: EvalAnywherePrompt = {
 };
 ",
       "lang": "typescript",
-      "path": "with_tools.ts",
+      "path": "with_tools_v0.ts",
     },
     {
       "contents": "import { z } from "zod";
@@ -847,24 +807,18 @@ export const structuredOutputPromptV0: EvalAnywherePrompt = {
   system_prompt: "system prompt",
   few_shot_messages: [],
   final_messages: [],
-  tools: [
-    {
-      name: "structured_output",
-      description: "",
-      parameters: structuredOutputSchemaV0,
-    },
-  ],
+  tools: [],
   schema: structuredOutputSchemaV0,
 };
 ",
       "lang": "typescript",
-      "path": "structured_output.ts",
+      "path": "structured_output_v0.ts",
     },
     {
       "contents": "export type { EvalAnywherePrompt } from "./types";
-export { simplePromptV0 } from "./simple_prompt";
-export { withToolsPromptV0 } from "./with_tools";
-export { structuredOutputPromptV0 } from "./structured_output";
+export { simplePromptV0 } from "./simple_prompt_v0";
+export { withToolsPromptV0 } from "./with_tools_v0";
+export { structuredOutputPromptV0 } from "./structured_output_v0";
 ",
       "lang": "typescript",
       "path": "index.ts",

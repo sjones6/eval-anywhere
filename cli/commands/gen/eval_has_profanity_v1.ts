@@ -21,12 +21,6 @@ export const evalHasProfanityPromptV1: EvalAnywherePrompt = {
     "Your task is determine whether the user's message includes any profanity or vulgar words.\n\nReligious words sometimes used as curse words, but used in their literal sense for their plain meaning, should not\nbe reported as profanity. Some examples include:\n- hell\n- damnation\n- Jesus Christ\n\nIf a list of forbidden words is supplied, these should be considered as profanity and flagged as well, even\nif not normally considered profane.\n\nThink carefully, step-by-step.",
   few_shot_messages: [],
   final_messages: [],
-  tools: [
-    {
-      name: "eval_has_profanity",
-      description: "",
-      parameters: evalHasProfanitySchemaV1,
-    },
-  ],
+  tools: [],
   schema: evalHasProfanitySchemaV1,
 };

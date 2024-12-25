@@ -27,11 +27,11 @@ import {
 import {
   evalOutputAlignmentPromptV1,
   evalOutputAlignmentSchemaV1,
-} from "./gen/eval_output_alignment";
+} from "./gen/eval_output_alignment_v1";
 import {
   evalHasProfanityPromptV1,
   evalHasProfanitySchemaV1,
-} from "./gen/eval_has_profanity";
+} from "./gen/eval_has_profanity_v1";
 
 const checksSchema = z.array(check).min(1);
 

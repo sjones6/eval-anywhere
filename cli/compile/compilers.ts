@@ -14,6 +14,7 @@ export const languageCompilers: {
 } = {
   [typescript]: javascriptVariant({
     fileExtension: "ts",
+    includeFileExtensionInImports: false,
     lang: typescript,
     zodPath: "zod",
     module: "esm",
@@ -21,6 +22,7 @@ export const languageCompilers: {
   }),
   [deno]: javascriptVariant({
     fileExtension: "ts",
+    includeFileExtensionInImports: true,
     lang: typescript,
     zodPath: "https://deno.land/x/zod@v3.24.1/mod.ts",
     module: "esm",
@@ -28,6 +30,7 @@ export const languageCompilers: {
   }),
   [node]: javascriptVariant({
     fileExtension: "js",
+    includeFileExtensionInImports: false,
     lang: node,
     zodPath: "zod",
     module: "cjs",
@@ -35,6 +38,7 @@ export const languageCompilers: {
   }),
   [nodeESM]: javascriptVariant({
     fileExtension: "js",
+    includeFileExtensionInImports: false,
     lang: node,
     zodPath: "zod",
     module: "esm",
@@ -42,6 +46,7 @@ export const languageCompilers: {
   }),
   [nodeCJS]: javascriptVariant({
     fileExtension: "js",
+    includeFileExtensionInImports: false,
     lang: node,
     zodPath: "zod",
     module: "cjs",
