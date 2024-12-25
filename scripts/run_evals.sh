@@ -4,6 +4,6 @@ rm -rf out
 
 pnpm build
 
-chmod +x ./dist/index.js
+chmod +x ./dist/cli/index.js
 
-./dist/index.js eval ./examples
+./dist/cli/index.js eval ./examples

@@ -104,19 +104,31 @@ sourceFile.addImportDeclaration({
 
 sourceFile.transform((traversal) => {
   const node = traversal.visitChildren();
-  if (
-    ts.isPropertySignature(node) &&
-    ts.isIdentifier(node.name) &&
+  if (ts.isPropertySignature(node) && ts.isIdentifier(node.name)) {
     // TODO: only swap type for tools.parameters.
-    ["parameters", "schema"].includes(node.name.text)
-  ) {
-    return traversal.factory.updatePropertySignature(
-      node,
-      node.modifiers,
-      node.name,
-      node.questionToken,
-      traversal.factory.createTypeReferenceNode("ZodSchema", []),
-    );
+    if (node.name.text === "parameters") {
+      return traversal.factory.updatePropertySignature(
+        node,
+        node.modifiers,
+        node.name,
+        node.questionToken,
+        traversal.factory.createTypeReferenceNode("ZodSchema", []),
+      );
+    }
+    if (node.name.text === "parameters") {
+      return traversal.factory.updatePropertySignature(
+        node,
+        node.modifiers,
+        node.name,
+        node.questionToken,
+        traversal.factory.createUnionTypeNode([
+          traversal.factory.createTypeReferenceNode("ZodSchema", []),
+          traversal.factory.createKeywordTypeNode(
+            ts.SyntaxKind.UndefinedKeyword,
+          ),
+        ]),
+      );
+    }
   }
   return node;
 });

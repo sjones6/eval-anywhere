@@ -6,6 +6,12 @@ export const typescript: Lang = "typescript" as const;
 
 export const deno: Lang = "deno" as const;
 
+export const node: Lang = "node" as const;
+
+export const nodeESM: Lang = "node-esm" as const;
+
+export const nodeCJS: Lang = "node-cjs" as const;
+
 export type CompileConfig = {
   outDir: string;
   packageDir: string;

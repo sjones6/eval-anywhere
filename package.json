@@ -13,7 +13,8 @@
     "fmt": "prettier --write .",
     "gen:eval-prompts": "./scripts/gen_eval_prompts.sh",
     "gen": "./scripts/gen.sh",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest --config ./vitest.config.mts",
+    "test:ci": "vitest run --coverage --config ./vitest.config.mts"
   },
   "keywords": [
     "llms",
@@ -24,10 +25,12 @@
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",
     "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^2.1.8",
     "json-schema-to-typescript": "^15.0.3",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   },
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "^1.0.5",
