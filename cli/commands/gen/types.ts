@@ -201,5 +201,13 @@ export type EvalAnywherePrompt = {
         parameters: ZodSchema;
       }[]
     | undefined;
-  schema?: ZodSchema;
+  schema?:
+    | (
+        | string
+        | {
+            /** A relative path from the prompt file or absolute path to the JSON schema */
+            path: string;
+          }
+      )
+    | undefined;
 };

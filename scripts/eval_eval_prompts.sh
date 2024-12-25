@@ -12,4 +12,4 @@ set -eou pipefail
 # first we need to build the CLI
 ./scripts/gen_eval_prompts.sh
 
-./dist/index.js eval ./cli/commands/prompts
+./dist/cli/index.js eval ./cli/commands/prompts

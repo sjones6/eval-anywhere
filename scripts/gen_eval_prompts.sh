@@ -8,8 +8,8 @@ pnpm gen
 
 pnpm build
 
-chmod +x ./dist/index.js
+chmod +x ./dist/cli/index.js
 
-./dist/index.js compile ./cli/commands/prompts -o ./cli/commands/gen -l typescript
+./dist/cli/index.js compile ./cli/commands/prompts -o ./cli/commands/gen -l typescript
 
 pnpm fmt
