@@ -626,13 +626,67 @@
                   {
                     "type": "object",
                     "properties": {
+                      "id": {
+                        "type": "string",
+                        "const": "tool_call"
+                      },
                       "name": {
                         "type": "string",
                         "description": "An optional name describing the check."
                       },
+                      "tool_calls": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "tool_name": {
+                              "type": "string",
+                              "description": "the name of the tool called"
+                            },
+                            "args": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "object",
+                                  "additionalProperties": {}
+                                },
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "array"
+                                }
+                              ],
+                              "description": "the arguments passed for the tool call."
+                            }
+                          },
+                          "required": ["tool_name", "args"],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": ["id", "tool_calls"],
+                    "additionalProperties": false,
+                    "description": "Determine if a tool call is made appropriately."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
                       "id": {
                         "type": "string",
                         "const": "profanity"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "An optional name describing the check."
                       },
                       "model": {
                         "type": "string",
@@ -737,13 +791,13 @@
                   {
                     "type": "object",
                     "properties": {
-                      "name": {
-                        "type": "string",
-                        "description": "An optional name describing the check."
-                      },
                       "id": {
                         "type": "string",
                         "const": "aligned"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "An optional name describing the check."
                       },
                       "model": {
                         "type": "string",
@@ -844,92 +898,13 @@
                   {
                     "type": "object",
                     "properties": {
-                      "name": {
-                        "type": "string",
-                        "description": "An optional name describing the check."
-                      },
-                      "id": {
-                        "type": "string",
-                        "const": "exact_match"
-                      },
-                      "value": {
-                        "type": "string",
-                        "description": "The exact match to check against."
-                      },
-                      "case_insensitive": {
-                        "type": "boolean",
-                        "description": "Whether to perform the match in a case insensitive way.",
-                        "default": false
-                      }
-                    },
-                    "required": ["id", "value"],
-                    "additionalProperties": false,
-                    "description": "Check if returned value is an exact match."
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string",
-                        "description": "An optional name describing the check."
-                      },
-                      "id": {
-                        "type": "string",
-                        "const": "tool_call"
-                      },
-                      "tool_calls": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "tool_name": {
-                              "type": "string",
-                              "description": "the name of the tool called"
-                            },
-                            "args": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "object",
-                                  "additionalProperties": {}
-                                },
-                                {
-                                  "type": "null"
-                                },
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "boolean"
-                                },
-                                {
-                                  "type": "array"
-                                }
-                              ],
-                              "description": "the arguments passed for the tool call."
-                            }
-                          },
-                          "required": ["tool_name", "args"],
-                          "additionalProperties": false
-                        }
-                      }
-                    },
-                    "required": ["id", "tool_calls"],
-                    "additionalProperties": false,
-                    "description": "Determine if a tool call is made appropriately."
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string",
-                        "description": "An optional name describing the check."
-                      },
                       "id": {
                         "type": "string",
                         "const": "structured_output"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "An optional name describing the check."
                       },
                       "result": {
                         "anyOf": [
@@ -951,7 +926,7 @@
                           },
                           {}
                         ],
-                        "description": "the arguments passed for the tool call."
+                        "description": "the response from a structured output call."
                       }
                     },
                     "required": ["id"],
@@ -961,13 +936,37 @@
                   {
                     "type": "object",
                     "properties": {
+                      "id": {
+                        "type": "string",
+                        "const": "exact_match"
+                      },
                       "name": {
                         "type": "string",
                         "description": "An optional name describing the check."
                       },
-                      "id": {
+                      "value": {
                         "type": "string",
-                        "const": "custom"
+                        "description": "The exact match to check against."
+                      },
+                      "case_insensitive": {
+                        "type": "boolean",
+                        "description": "Whether to perform the match in a case insensitive way.",
+                        "default": false
+                      }
+                    },
+                    "required": ["id", "value"],
+                    "additionalProperties": false,
+                    "description": "Check if returned value is an exact match."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "An optional name describing the check."
                       },
                       "model": {
                         "type": "string",
@@ -1055,11 +1054,11 @@
                           "groq@mixtral-8x7b-32768"
                         ],
                         "description": "List of model with providers, using the format {provider}@{model-slug}"
-                      },
-                      "arguments": {}
+                      }
                     },
                     "required": ["id"],
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "description": "A user-defined custom check."
                   }
                 ]
               },
@@ -1230,13 +1229,67 @@
                         {
                           "type": "object",
                           "properties": {
+                            "id": {
+                              "type": "string",
+                              "const": "tool_call"
+                            },
                             "name": {
                               "type": "string",
                               "description": "An optional name describing the check."
                             },
+                            "tool_calls": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "tool_name": {
+                                    "type": "string",
+                                    "description": "the name of the tool called"
+                                  },
+                                  "args": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "array"
+                                      }
+                                    ],
+                                    "description": "the arguments passed for the tool call."
+                                  }
+                                },
+                                "required": ["tool_name", "args"],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": ["id", "tool_calls"],
+                          "additionalProperties": false,
+                          "description": "Determine if a tool call is made appropriately."
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
                             "id": {
                               "type": "string",
                               "const": "profanity"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "An optional name describing the check."
                             },
                             "model": {
                               "type": "string",
@@ -1341,13 +1394,13 @@
                         {
                           "type": "object",
                           "properties": {
-                            "name": {
-                              "type": "string",
-                              "description": "An optional name describing the check."
-                            },
                             "id": {
                               "type": "string",
                               "const": "aligned"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "An optional name describing the check."
                             },
                             "model": {
                               "type": "string",
@@ -1448,92 +1501,13 @@
                         {
                           "type": "object",
                           "properties": {
-                            "name": {
-                              "type": "string",
-                              "description": "An optional name describing the check."
-                            },
-                            "id": {
-                              "type": "string",
-                              "const": "exact_match"
-                            },
-                            "value": {
-                              "type": "string",
-                              "description": "The exact match to check against."
-                            },
-                            "case_insensitive": {
-                              "type": "boolean",
-                              "description": "Whether to perform the match in a case insensitive way.",
-                              "default": false
-                            }
-                          },
-                          "required": ["id", "value"],
-                          "additionalProperties": false,
-                          "description": "Check if returned value is an exact match."
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "name": {
-                              "type": "string",
-                              "description": "An optional name describing the check."
-                            },
-                            "id": {
-                              "type": "string",
-                              "const": "tool_call"
-                            },
-                            "tool_calls": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "tool_name": {
-                                    "type": "string",
-                                    "description": "the name of the tool called"
-                                  },
-                                  "args": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string"
-                                      },
-                                      {
-                                        "type": "object",
-                                        "additionalProperties": {}
-                                      },
-                                      {
-                                        "type": "null"
-                                      },
-                                      {
-                                        "type": "number"
-                                      },
-                                      {
-                                        "type": "boolean"
-                                      },
-                                      {
-                                        "type": "array"
-                                      }
-                                    ],
-                                    "description": "the arguments passed for the tool call."
-                                  }
-                                },
-                                "required": ["tool_name", "args"],
-                                "additionalProperties": false
-                              }
-                            }
-                          },
-                          "required": ["id", "tool_calls"],
-                          "additionalProperties": false,
-                          "description": "Determine if a tool call is made appropriately."
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "name": {
-                              "type": "string",
-                              "description": "An optional name describing the check."
-                            },
                             "id": {
                               "type": "string",
                               "const": "structured_output"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "An optional name describing the check."
                             },
                             "result": {
                               "anyOf": [
@@ -1555,7 +1529,7 @@
                                 },
                                 {}
                               ],
-                              "description": "the arguments passed for the tool call."
+                              "description": "the response from a structured output call."
                             }
                           },
                           "required": ["id"],
@@ -1565,13 +1539,37 @@
                         {
                           "type": "object",
                           "properties": {
+                            "id": {
+                              "type": "string",
+                              "const": "exact_match"
+                            },
                             "name": {
                               "type": "string",
                               "description": "An optional name describing the check."
                             },
-                            "id": {
+                            "value": {
                               "type": "string",
-                              "const": "custom"
+                              "description": "The exact match to check against."
+                            },
+                            "case_insensitive": {
+                              "type": "boolean",
+                              "description": "Whether to perform the match in a case insensitive way.",
+                              "default": false
+                            }
+                          },
+                          "required": ["id", "value"],
+                          "additionalProperties": false,
+                          "description": "Check if returned value is an exact match."
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "An optional name describing the check."
                             },
                             "model": {
                               "type": "string",
@@ -1659,11 +1657,11 @@
                                 "groq@mixtral-8x7b-32768"
                               ],
                               "description": "List of model with providers, using the format {provider}@{model-slug}"
-                            },
-                            "arguments": {}
+                            }
                           },
                           "required": ["id"],
-                          "additionalProperties": false
+                          "additionalProperties": false,
+                          "description": "A user-defined custom check."
                         }
                       ]
                     },
@@ -1675,7 +1673,7 @@
                 "additionalProperties": false
               },
               "minItems": 1,
-              "description": "A list of evaluations to run"
+              "description": "A list of evaluations to run."
             }
           },
           "required": ["evaluations"],

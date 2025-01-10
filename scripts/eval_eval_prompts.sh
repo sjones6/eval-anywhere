@@ -10,6 +10,8 @@ set -eou pipefail
 ###
 
 # first we need to build the CLI
+# and generate the prompts
 ./scripts/gen_eval_prompts.sh
 
-./dist/cli/index.js eval ./cli/commands/prompts
+# then run evals on them
+./dist/cli.js eval ./src/evals/prompts

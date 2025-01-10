@@ -1,17 +1,18 @@
 import fs from "node:fs";
 import path from "path";
 import { zodToJsonSchema, JsonSchema7Type } from "zod-to-json-schema";
-import { check } from "../cli/schemas/check";
-import { models } from "../cli/schemas/models";
-import { message } from "../cli/schemas/message";
-import { tool } from "../cli/schemas/tool";
-import { evaluation } from "../cli/schemas/evaluation";
-import { messages, prompt, promptNoEval } from "../cli/schemas/prompt";
+import { checks } from "../src/schemas/check";
+import { models } from "../src/schemas/models";
+import { message } from "../src/schemas/message";
+import { tool } from "../src/schemas/tool";
+import { evaluation } from "../src/schemas/evaluation";
+import { messages, prompt, promptNoEval } from "../src/schemas/prompt";
 import * as prettier from "prettier";
 
 import { Project, ts } from "ts-morph";
 
 import { zodToTs, printNode, createTypeAlias } from "zod-to-ts";
+import { z } from "zod";
 
 const writeSchema = (schema: JsonSchema7Type, name: string): void => {
   fs.writeFileSync(
@@ -21,49 +22,11 @@ const writeSchema = (schema: JsonSchema7Type, name: string): void => {
 };
 
 writeSchema(
-  zodToJsonSchema(check, {
-    name: "EvalAnywhereCheck",
-    definitionPath: "$defs",
-    definitions: {
-      models,
-    },
-  }),
-  "check.json",
-);
-
-writeSchema(
-  zodToJsonSchema(models, {
-    name: "EvalAnywhereModels",
-    definitionPath: "$defs",
-  }),
-  "models.json",
-);
-
-writeSchema(
-  zodToJsonSchema(message, {
-    name: "EvalAnywhereMessage",
-    definitionPath: "$defs",
-    definitions: {
-      tool,
-    },
-  }),
-  "message.json",
-);
-
-writeSchema(
   zodToJsonSchema(tool, {
     name: "EvalAnywhereTool",
     definitionPath: "$defs",
   }),
   "tool.json",
-);
-
-writeSchema(
-  zodToJsonSchema(evaluation, {
-    name: "EvalAnywhereEvaluation",
-    definitionPath: "$defs",
-  }),
-  "eval.yaml.json",
 );
 
 writeSchema(
@@ -105,7 +68,7 @@ sourceFile.addImportDeclaration({
 sourceFile.transform((traversal) => {
   const node = traversal.visitChildren();
   if (ts.isPropertySignature(node) && ts.isIdentifier(node.name)) {
-    // TODO: only swap type for tools.parameters.
+    // TODO: only swap type for tools.parameters and not all parameters
     if (node.name.text === "parameters") {
       return traversal.factory.updatePropertySignature(
         node,

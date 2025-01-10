@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { check } from "./check";
+import { checks } from "./check";
 import { message } from "./message";
 
 export const evaluationCheck = z
@@ -10,7 +10,7 @@ export const evaluationCheck = z
       .min(1)
       .describe("An array of messages to include run with the prompt."),
     checks: z
-      .array(check)
+      .array(z.union(checks))
       .min(1)
       .describe(
         "a list of checks to perform for this specific eval. Merged with the general list.",
@@ -24,14 +24,14 @@ export type EvaluationCheck = z.infer<typeof evaluationCheck>;
 export const evaluation = z
   .object({
     checks: z
-      .array(check)
+      .array(z.union(checks))
       .min(1)
       .describe("a list of checks to perform on every evaluation case.")
       .optional(),
     evaluations: z
       .array(evaluationCheck)
       .min(1)
-      .describe("A list of evaluations to run"),
+      .describe("A list of evaluations to run."),
   })
   .strict()
   .describe(

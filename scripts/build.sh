@@ -4,4 +4,4 @@ rm -rf dist/
 
 npx tsc
 
-sed '1s|^|#!/usr/bin/env node\n\n|' ./dist/cli/index.js > ./dist/cli/index.tmp.js && mv ./dist/cli/index.tmp.js ./dist/cli/index.js
+sed '1s|^|#!/usr/bin/env node\n\n|' ./dist/cli.js > ./dist/cli.tmp.js && mv ./dist/cli.tmp.js ./dist/cli.js

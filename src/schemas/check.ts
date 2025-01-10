@@ -1,12 +1,15 @@
 import { z } from "zod";
 import { models } from "./models";
 
-const baseCheck = z.object({
+export const baseCheck = z.object({
+  id: z.string(),
   name: z
     .string()
     .describe("An optional name describing the check.")
     .optional(),
 });
+
+export type BaseCheck = z.infer<typeof baseCheck>;
 
 export const profanityCheck = baseCheck
   .extend({
@@ -22,6 +25,8 @@ export const profanityCheck = baseCheck
   })
   .strict()
   .describe("Check if profanity is included.");
+
+profanityCheck.shape.id._def.value;
 
 export type ProfanityCheck = z.infer<typeof profanityCheck>;
 
@@ -54,7 +59,7 @@ export const exactMatch = baseCheck
 
 export type ExactMatch = z.infer<typeof exactMatch>;
 
-export const toolCall = baseCheck
+export const toolCallCheck = baseCheck
   .extend({
     id: z.literal("tool_call"),
     tool_calls: z.array(
@@ -76,7 +81,7 @@ export const toolCall = baseCheck
   .strict()
   .describe("Determine if a tool call is made appropriately.");
 
-export type ToolCall = z.infer<typeof toolCall>;
+export type ToolCall = z.infer<typeof toolCallCheck>;
 
 export const structuredOutputCheck = baseCheck
   .extend({
@@ -95,31 +100,26 @@ export const structuredOutputCheck = baseCheck
           .describe("a path where the "),
         z.any(),
       ])
-      .describe("the arguments passed for the tool call."),
+      .describe("the response from a structured output call."),
   })
   .strict()
   .describe("Check structured ouptut for equivalence.");
 
 export type StructuredOutput = z.infer<typeof structuredOutputCheck>;
 
-export const customCheck = baseCheck.extend({
-  id: z.literal("custom"),
-  model: models.optional(),
-  arguments: z.any(),
-});
+export const customCheck = baseCheck
+  .extend({
+    model: models.optional(),
+  })
+  .describe("A user-defined custom check.");
 
 export type CustomCheck = z.infer<typeof customCheck>;
 
-export const check = z.discriminatedUnion("id", [
-  // Built ins
+export const checks = [
+  toolCallCheck,
   profanityCheck,
   alignmentCheck,
-  exactMatch,
-  toolCall,
   structuredOutputCheck,
-
-  // Custom
+  exactMatch,
   customCheck,
-]);
-
-export type Check = z.infer<typeof check>;
+] as const;
