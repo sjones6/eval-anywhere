@@ -10,7 +10,7 @@ import {
 } from "./types";
 
 export const languageCompilers: {
-  [key: Lang]: CompileFn;
+  [key: Lang | string]: CompileFn;
 } = {
   [typescript]: javascriptVariant({
     fileExtension: "ts",
@@ -54,7 +54,5 @@ export const languageCompilers: {
   }),
 };
 
-const supportedLanguages = Object.keys(languageCompilers);
-
 export const isSupportedLanguage = (str: string): str is Lang =>
-  supportedLanguages.includes(str);
+  Object.keys(languageCompilers).includes(str);

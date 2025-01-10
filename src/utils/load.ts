@@ -10,7 +10,8 @@ import { Tool } from "../schemas/tool";
 import path from "node:path";
 import {
   AlignmentCheck,
-  Check,
+  BaseCheck,
+  // Check,
   CustomCheck,
   ExactMatch,
   ProfanityCheck,
@@ -142,8 +143,14 @@ const resolveJSONSchema = ({
   throw new Error("Invalid JSON schema");
 };
 
-const resolveCheck = (cwd: string, check: Check): ResolvedCheck => {
-  if (check.id === "structured_output") {
+const isStructuredOutput = (check: BaseCheck): check is StructuredOutput =>
+  check.id === "structured_output";
+
+const resolveCheck = (
+  cwd: string,
+  check: BaseCheck | StructuredOutput,
+): ResolvedCheck => {
+  if (isStructuredOutput(check)) {
     return {
       ...check,
       result: resolveJSON({

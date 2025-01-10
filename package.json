@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "description": "Everything you need to create prompts for LLMs that are consistent, reliable, and efficient and run anywhere.",
   "bin": {
-    "eval-anywhere": "./dist/cli.js"
+    "anywhere": "./dist/cli.js"
   },
   "scripts": {
     "build": "./scripts/build.sh",
     "compile:examples": "./scripts/test_compile.sh",
     "eval:eval-prompts": "./scripts/eval_eval_prompts.sh",
     "eval:examples": "./scripts/run_evals.sh",
-    "fmt": "prettier --write .",
+    "fmt": "prettier --write . --log-level warn",
     "gen:eval-prompts": "./scripts/gen_eval_prompts.sh",
     "gen": "./scripts/gen.sh",
     "test": "vitest --config ./vitest.config.mts",
@@ -47,6 +47,8 @@
     "glob": "^11.0.0",
     "json-schema-to-zod": "^2.5.0",
     "lodash": "^4.17.21",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
     "ts-morph": "^24.0.0",
     "yaml": "^2.6.1",
     "zod": "^3.24.1",
