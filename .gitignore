@@ -44,6 +44,7 @@ certificates
 
 # evals
 eval-results.json
+*-eval-results.json
 
 # local
 todo.md

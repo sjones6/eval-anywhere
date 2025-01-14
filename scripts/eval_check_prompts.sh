@@ -11,7 +11,7 @@ set -eou pipefail
 
 # first we need to build the CLI
 # and generate the prompts
-./scripts/gen_eval_prompts.sh
+pnpm build
 
 # then run evals on them
-./dist/cli.js eval ./src/evals/prompts
+./dist/cli.js eval ./src/evals/prompts -o ./out/results/check-prompt-eval-results.json

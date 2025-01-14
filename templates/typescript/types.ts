@@ -1,8 +1,86 @@
 import type { ZodSchema } from "zod";
-export type EvalAnywherePrompt = {
-  /** The name of the prompt. For output, this will be turned into camel case. */
+
+export type Message =
+  | {
+      /** The assumed role of the entity responsible for this message. */
+      role: "user";
+      /** The content of the message. */
+      content: string;
+      /** A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send. */
+      name?: string | undefined;
+    }
+  | {
+      /** The assumed role of the entity responsible for this message. */
+      role: "assistant";
+      /** The content of the message. */
+      content: string;
+      tool_calls?:
+        | {
+            /** The ID of the function call */
+            id: string;
+            function: {
+              /** The stringified JSON arguments */
+              arguments: string;
+              /** The name of the function to call */
+              name: string;
+            };
+            type: "function";
+          }[]
+        | undefined;
+    }
+  | {
+      /**
+       * The assumed role of the entity responsible for this message.
+       */
+      role: "tool";
+
+      /**
+       * ID of the tool call that this result is associated with.
+       */
+      toolCallId: string;
+
+      /**
+       * Name of the tool that generated this result.
+       */
+      toolName: string;
+
+      /**
+       * The result of the tool call.
+       */
+      result: {} | boolean | string | number | null;
+
+      /**
+       * Optional flag if the result is an error or an error message.
+       */
+      isError?: boolean;
+    };
+
+type Tool = {
+  /**
+   * The name of the tool function. This should be descriptive as to what the tool does.
+   */
   name: string;
-  /** The default model to use with this prompt. Ultimately, the target runtime will choose a supported prompt. */
+
+  /**
+   * The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool.
+   */
+  description: string;
+
+  /**
+   * The parameters for the function call.
+   */
+  parameters: ZodSchema;
+};
+
+export type EvalAnywherePrompt = {
+  /**
+   * The name of the prompt. For output, this will be turned into camel case.
+   */
+  name: string;
+
+  /**
+   * The default model to use with this prompt. Ultimately, the target runtime will choose a supported prompt.
+   */
   model?:
     | (
         | "anthropic@claude-3-5-sonnet-20241022"
@@ -88,118 +166,43 @@ export type EvalAnywherePrompt = {
         | "groq@mixtral-8x7b-32768"
       )
     | undefined;
-  /** An array of few shot messages to include in the prompt. */
-  few_shot_messages?:
-    | (
-        | {
-            /** The assumed role of the entity responsible for this message. */
-            role: "user";
-            /** The content of the message. */
-            content: string;
-            /** A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send. */
-            name?: string | undefined;
-          }
-        | {
-            /** The assumed role of the entity responsible for this message. */
-            role: "assistant";
-            /** The content of the message. */
-            content: string;
-            tool_calls?:
-              | {
-                  /** The ID of the function call */
-                  id: string;
-                  function: {
-                    /** The stringified JSON arguments */
-                    arguments: string;
-                    /** The name of the function to call */
-                    name: string;
-                  };
-                  type: "function";
-                }[]
-              | undefined;
-          }
-        | {
-            /** The assumed role of the entity responsible for this message. */
-            role: "tool";
-            content: {
-              type: "tool-result";
-              /** ID of the tool call that this result is associated with. */
-              toolCallId: string;
-              /** Name of the tool that generated this result. */
-              toolName: string;
-              result: {} | boolean | string | number | null;
-              /** Optional flag if the result is an error or an error message. */
-              isError: boolean;
-            }[];
-            /** The ID of the tool call. Must match an actual tool call. */
-            tool_call_id: string;
-          }
-      )[]
-    | undefined;
-  /** An array of messages to include _after_ the users messages are inserted. These are helpful for providing guidance and guardrails as the final thing the model sees. */
-  final_messages?:
-    | (
-        | {
-            /** The assumed role of the entity responsible for this message. */
-            role: "user";
-            /** The content of the message. */
-            content: string;
-            /** A name to assume in the context of few shot message. This is helpful to distinguish from real messages the user may send. */
-            name?: string | undefined;
-          }
-        | {
-            /** The assumed role of the entity responsible for this message. */
-            role: "assistant";
-            /** The content of the message. */
-            content: string;
-            tool_calls?:
-              | {
-                  /** The ID of the function call */
-                  id: string;
-                  function: {
-                    /** The stringified JSON arguments */
-                    arguments: string;
-                    /** The name of the function to call */
-                    name: string;
-                  };
-                  type: "function";
-                }[]
-              | undefined;
-          }
-        | {
-            /** The assumed role of the entity responsible for this message. */
-            role: "tool";
-            content: {
-              type: "tool-result";
-              /** ID of the tool call that this result is associated with. */
-              toolCallId: string;
-              /** Name of the tool that generated this result. */
-              toolName: string;
-              result: {} | boolean | string | number | null;
-              /** Optional flag if the result is an error or an error message. */
-              isError: boolean;
-            }[];
-            /** The ID of the tool call. Must match an actual tool call. */
-            tool_call_id: string;
-          }
-      )[]
-    | undefined;
-  /** The version of the prompt. */
+
+  /**
+   * An array of few shot messages to include in the prompt.
+   */
+  fewShotMessages?: [Message, ...Message[]];
+
+  /**
+   * An array of messages to include _after_ the users messages are inserted.
+   *
+   * These are helpful for providing guidance and guardrails as the final thing the model sees.
+   **/
+  finalMessages?: [Message, ...Message[]];
+
+  /**
+   * The version of the prompt.
+   */
   version?: number;
-  /** The system prompt to use for the prompt. */
-  system_prompt: string;
-  /** A number between 0 and 2 that controls the randomness of the response. Lower numbers result in less random (although still random) responses. */
+
+  /**
+   * The system prompt to use for the prompt.
+   */
+  systemPrompt: string;
+
+  /**
+   * A number between 0 and 2 that controls the randomness of the response.
+   *
+   * Lower numbers result in less random (although still random) responses.
+   * */
   temperature?: number;
-  /** A list of tools available to the prompt */
-  tools?:
-    | {
-        /** The name of the tool function. This should be descriptive as to what the tool does. */
-        name: string;
-        /** The description of the function. This should be meaningful to LLMs to aid in guiding the LLM to select this tool. */
-        description: string;
-        /** the parameters for the function call. Either the schema inlined or a path to a file to load it. */
-        parameters: ZodSchema;
-      }[]
-    | undefined;
-  schema?: ZodSchema | undefined;
+
+  /**
+   * A list of tools available to the prompt.
+   */
+  tools?: [Tool, ...Tool[]];
+
+  /**
+   * A schema to describe structured output .
+   */
+  schema?: ZodSchema;
 };

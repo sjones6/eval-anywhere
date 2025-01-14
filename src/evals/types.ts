@@ -1,12 +1,14 @@
-import { z, ZodLiteral, ZodObject, ZodOptional, ZodString } from "zod";
-import { JSONValue, ResolvedPrompt } from "../core/types";
-import { Message } from "../schemas/message";
+import { z, ZodLiteral, ZodObject } from "zod";
+import { JSONValue, Prompt, Message } from "../core/types";
 import { AnywhereConfig } from "../core";
 
 export type CheckResult = {
   success: boolean;
-  name: string;
   data: unknown;
+};
+
+export type NamedCheckResult = CheckResult & {
+  name: string;
 };
 
 export type EvaluationResult = {
@@ -15,22 +17,21 @@ export type EvaluationResult = {
   model: string;
   provider: string;
   durationMS: number;
-  checks: CheckResult[];
+  checks: NamedCheckResult[];
 };
 
 export type PromptWithResults = {
-  prompt: ResolvedPrompt;
+  prompt: Prompt;
   evaluationResults: EvaluationResult[];
 };
 
 export type SchemaCheckBase = ZodObject<{
   id: ZodLiteral<string>;
-  name: ZodOptional<ZodString>;
 }>;
 
 export type CustomCheckFnParams<Schema extends SchemaCheckBase> = {
   config: AnywhereConfig;
-  prompt: ResolvedPrompt;
+  prompt: Prompt;
   check: z.infer<Schema>;
 };
 

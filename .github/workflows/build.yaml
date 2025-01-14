@@ -48,13 +48,11 @@ jobs:
           cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
+      - name: Compile
+        run: pnpm compile
       - name: Fmt
         run: pnpm fmt
-      - name: Generate
-        run: pnpm gen
-      - name: Generate Prompts Used in Code
-        run: pnpm gen:eval-prompts
-      - name: Generate
+      - name: Check
         run: |
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes"

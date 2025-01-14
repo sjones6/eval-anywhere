@@ -4,6 +4,6 @@ rm -rf out
 
 pnpm build
 
-chmod +x ./dist/cli/index.js
+./dist/cli.js eval ./examples/base -o ./out/evals/eval-results.json
 
-./dist/cli/index.js eval ./examples
+tsx ./examples/customized/customized-cli.ts eval ./examples/customized -o ./out/evals/custom-eval-results.json

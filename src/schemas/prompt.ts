@@ -2,7 +2,9 @@ import { z } from "zod";
 import { models } from "./models";
 import { message } from "./message";
 import { tool } from "./tool";
-import { evaluation } from "./evaluation";
+import { createEvaluationSchema, evaluation } from "./evaluation";
+import { SchemaCheckBase } from "../evals/types";
+import { withRef } from "./ref";
 
 export const messages = z.array(message).min(1);
 
@@ -15,7 +17,7 @@ export const promptNoEval = z
       ),
     model: models
       .describe(
-        "The default model to use with this prompt. Ultimately, the target runtime will choose a supported prompt.",
+        "The default model to use with this prompt. Ultimately, the target runtime will choose a supported model and provider.",
       )
       .optional(),
     few_shot_messages: messages
@@ -44,26 +46,18 @@ export const promptNoEval = z
       )
       .default(0),
     tools: z
-      .array(tool)
+      .array(withRef(tool))
       .min(1)
       .describe("A list of tools available to the prompt")
       .optional(),
-    schema: z
-      .union([
-        z
-          .string()
-          .describe(
-            "A JSON schema definition of how the schema of the response.",
-          ),
-        z.object({
-          path: z
-            .string()
-            .regex(/^.*\.json$/, "must be a json file")
-            .describe(
-              "A relative path from the prompt file or absolute path to the JSON schema",
-            ),
-        }),
-      ])
+    schema: withRef(
+      z
+        .string()
+        .describe(
+          "A JSON schema definition of how the schema of the response.",
+        ),
+    )
+      .describe("A schema to describe structured output")
       .optional(),
   })
   .strict()
@@ -72,6 +66,15 @@ export const promptNoEval = z
   );
 
 export type PromptNoEval = z.infer<typeof promptNoEval>;
+
+export const createPromptSchema = <T extends SchemaCheckBase>(
+  checks: readonly T[],
+) => {
+  const { evaluation } = createEvaluationSchema(checks);
+  return promptNoEval.extend({
+    evaluation: evaluation.optional(),
+  });
+};
 
 export const prompt = promptNoEval.extend({
   evaluation: evaluation.optional(),

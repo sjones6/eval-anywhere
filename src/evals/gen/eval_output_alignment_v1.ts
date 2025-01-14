@@ -19,10 +19,7 @@ export const evalOutputAlignmentPromptV1: EvalAnywherePrompt = {
   version: 1,
   model: "openai@gpt-4o-mini",
   temperature: 0,
-  system_prompt:
+  systemPrompt:
     "Your task is determine whether the user's message aligned with the expected value. Use your best judgment.",
-  few_shot_messages: [],
-  final_messages: [],
-  tools: [],
   schema: evalOutputAlignmentSchemaV1,
 };

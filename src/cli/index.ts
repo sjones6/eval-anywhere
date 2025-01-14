@@ -11,6 +11,7 @@ import {
 import { loadPrompts } from "../utils/load";
 import { writeFiles } from "../compile/write";
 import { Anywhere } from "../core";
+import { createPromptSchema } from "../schemas/prompt";
 
 const languages = Object.keys(languageCompilers);
 
@@ -64,7 +65,9 @@ export const run = async (anywhere: Anywhere): Promise<void> => {
       const outDir = resolveDirPathToCWD(out, {
         checkExistence: false,
       });
-      const packageDir = __filename.split("dist")[0];
+      const packageDir = __filename.includes("dist")
+        ? __filename.split("dist")[0]!
+        : process.cwd();
 
       if (!isSupportedLanguage(language)) {
         throw new Error(`Language "${language}" is not supported`);
@@ -75,8 +78,14 @@ export const run = async (anywhere: Anywhere): Promise<void> => {
       const cfg: CompileConfig = {
         lang: language,
         outDir: outDir,
-        packageDir: packageDir!,
-        prompts: await loadPrompts({ baseDir, glob: match }),
+        packageDir: packageDir,
+        prompts: await loadPrompts({
+          baseDir,
+          glob: match,
+          promptSchema: createPromptSchema(
+            anywhere.config.checks.map(({ schema }) => schema),
+          ),
+        }),
       };
 
       const res = await languageCompilers[language]!(cfg);
@@ -107,22 +116,33 @@ export const run = async (anywhere: Anywhere): Promise<void> => {
     .command("eval")
     .argument("<dir>", "the directory in which to run evals")
     .addOption(globMatch)
-    .action(async (dir, { match }) => {
+    .addOption(
+      new Option(
+        "-o --out <out>",
+        "Relative path where to write the schema.",
+      ).default("eval-results.json"),
+    )
+    .action(async (dir, { match, out }) => {
       try {
         anywhere.config.logger.info("Starting evals ...");
-        const out = resolveDirPathToCWD("./eval-results.json", {
+        const outPath = resolveDirPathToCWD(out, {
           checkExistence: false,
         });
         const prompts = await loadPrompts({
           baseDir: resolveDirPathToCWD(dir),
           glob: match,
+          promptSchema: createPromptSchema(
+            anywhere.config.checks.map(({ schema }) => schema),
+          ),
         });
         const results = await anywhere.eval(prompts.map((p) => p.prompt));
-        await fsp.writeFile(out, JSON.stringify(results, null, 2));
+
+        await fsp.mkdir(path.dirname(outPath), { recursive: true });
+        await fsp.writeFile(outPath, JSON.stringify(results, null, 2));
 
         anywhere.config.logger.info(
           {
-            results: out,
+            results: outPath,
           },
           "Results written to file.",
         );
@@ -133,6 +153,29 @@ export const run = async (anywhere: Anywhere): Promise<void> => {
             error,
           },
           "Unexpected error running evals",
+        );
+        process.exit(1);
+      }
+    });
+
+  /**
+   * Print the prompt schema, along with any relevant customizations.
+   */
+  program
+    .command("schema")
+    .addOption(
+      new Option("-o --out <out>", "Relative path where to write the schema."),
+    )
+    .action(async ({ out }) => {
+      try {
+        anywhere.printPromptSchema(out);
+        process.exit(0);
+      } catch (error) {
+        anywhere.config.logger.error(
+          {
+            error,
+          },
+          "Unexpected error printing schema",
         );
         process.exit(1);
       }

@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=./with_custom_check_prompt_schema.json
+
+name: Bird Guessing Prompt
+version: 1
+
+model: openai@gpt-4o-mini
+
+system_prompt: |-
+  Your job is to guess what bird the user is alluding too given their clues.
+
+evaluation:
+  evaluations:
+    - messages:
+        - role: user
+          content: Edgar Allan Poe talks about this bird in one of his famous stories and what the bird "quoth".
+      checks:
+        - id: is_bird
+          known_birds:
+            - raven
+    - messages:
+        - role: user
+          content: What bird is mentioned in the heart of Charles Bukowski's poem?
+      checks:
+        is_bird:
+          known_birds:
+            - bluebird
