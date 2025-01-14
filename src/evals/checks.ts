@@ -5,7 +5,7 @@ import {
   profanityCheck,
   structuredOutputCheck,
   toolCallCheck,
-} from "../schemas/check";
+} from "./schema";
 import {
   CheckResult,
   CustomCheckChatCompletion,
@@ -13,9 +13,11 @@ import {
 } from "./types";
 import { loadModel } from "../utils/models";
 import { evalHasProfanityPromptV1, evalOutputAlignmentPromptV1 } from "./gen";
+import { Message as AnywhereMessage } from "./gen/types";
 import { evalHasProfanitySchemaV1 } from "./gen/eval_has_profanity_v1";
 import { evalOutputAlignmentSchemaV1 } from "./gen/eval_output_alignment_v1";
 import { isEqual } from "lodash";
+import { anywhereMessageToAIMessage } from "./utils";
 
 const completionToString = (v: CustomCheckChatCompletion): string => {
   if (v.type === "text") {
@@ -25,10 +27,8 @@ const completionToString = (v: CustomCheckChatCompletion): string => {
 };
 
 const resolveModel = ({
-  checkName,
   modelName,
 }: {
-  checkName: string;
   modelName: string;
 }): [LanguageModelV1, true] | [CheckResult, false] => {
   const model = loadModel(modelName);
@@ -36,7 +36,6 @@ const resolveModel = ({
     return [
       {
         success: false,
-        name: checkName,
         data: {
           model: modelName,
         },
@@ -51,27 +50,27 @@ export const defaultChecks = [
   // profanity check
   defineCustomCheck(profanityCheck, async (result, { check, config }) => {
     const [model, ok] = resolveModel({
-      checkName: check.name ?? check.id,
       modelName: check.model ?? config.defaultModel,
     });
     if (!ok) {
       return model;
     }
+    const messages: AnywhereMessage[] = [
+      ...(evalHasProfanityPromptV1.fewShotMessages ?? []),
+      {
+        role: "assistant",
+        content: `Here's a list of words that must not be included in any form: ${JSON.stringify(check.forbidden ?? [])}`,
+      },
+      {
+        role: "user",
+        content: completionToString(result),
+      },
+      ...(evalHasProfanityPromptV1.finalMessages ?? []),
+    ];
     const { object } = await generateObject({
       model,
-      system: evalHasProfanityPromptV1.system_prompt,
-      messages: [
-        ...(evalHasProfanityPromptV1.few_shot_messages ?? []),
-        {
-          role: "assistant",
-          content: `Here's a list of words that must not be included in any form: ${JSON.stringify(check.forbidden ?? [])}`,
-        },
-        {
-          role: "user",
-          content: completionToString(result),
-        },
-        ...(evalHasProfanityPromptV1.final_messages ?? []),
-      ],
+      system: evalHasProfanityPromptV1.systemPrompt,
+      messages: messages.map(anywhereMessageToAIMessage),
       schema: evalHasProfanitySchemaV1,
     });
     return {
@@ -100,27 +99,27 @@ export const defaultChecks = [
   // aligned
   defineCustomCheck(alignmentCheck, async (result, { check, config }) => {
     const [model, ok] = resolveModel({
-      checkName: check.name ?? check.id,
       modelName: check.model ?? config.defaultModel,
     });
     if (!ok) {
       return model;
     }
+    const messages: AnywhereMessage[] = [
+      ...(evalOutputAlignmentPromptV1.fewShotMessages ?? []),
+      {
+        role: "assistant",
+        content: check.instructions,
+      },
+      {
+        role: "user",
+        content: completionToString(result),
+      },
+      ...(evalOutputAlignmentPromptV1.finalMessages ?? []),
+    ];
     const { object } = await generateObject({
       model,
-      system: evalOutputAlignmentPromptV1.system_prompt,
-      messages: [
-        ...(evalOutputAlignmentPromptV1.few_shot_messages ?? []),
-        {
-          role: "assistant",
-          content: check.instructions,
-        },
-        {
-          role: "user",
-          content: completionToString(result),
-        },
-        ...(evalOutputAlignmentPromptV1.final_messages ?? []),
-      ],
+      system: evalOutputAlignmentPromptV1.systemPrompt,
+      messages: messages.map(anywhereMessageToAIMessage),
       schema: evalOutputAlignmentSchemaV1,
     });
     return {
@@ -136,7 +135,6 @@ export const defaultChecks = [
   defineCustomCheck(toolCallCheck, async (result, { check, config }) => {
     const checkResult: CheckResult = {
       success: false,
-      name: check.name ?? check.id,
       data: {
         check: check.tool_calls,
         tool_calls: [],

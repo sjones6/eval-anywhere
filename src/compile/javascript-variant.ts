@@ -14,6 +14,10 @@ const nameToFileName = (str: string): string => {
     .toLowerCase();
 };
 
+const exists = (check: boolean, str: string): string => {
+  return check ? str : "";
+};
+
 export type JavaScriptVariant = {
   lang: Lang;
   fileExtension: "js" | "ts";
@@ -133,19 +137,20 @@ export const javascriptVariant =
             : false,
         ].filter((line) => typeof line === "string");
 
-        const unformattedPrompt = `${importStatements.join("\n ")}
-
-${schemas?.map(({ schema }) => schema).join("\n\n")}
-
-${variant.module === "cjs" ? "module.exports." : "export const "}${className}${variant.includeTypes ? ": EvalAnywherePrompt" : ""} = {
-  name: ${JSON.stringify(prompt.name)},
-  version: ${version},
-  model: ${JSON.stringify(prompt.model)},
-  temperature: ${JSON.stringify(prompt.temperature)},
-  system_prompt: ${JSON.stringify(prompt.system_prompt)},
-  few_shot_messages: ${JSON.stringify(prompt.few_shot_messages ?? [], null, 2)},
-  final_messages: ${JSON.stringify(prompt.final_messages ?? [], null, 2)},
-  tools: [
+        const optionalPromptProperties = [
+          exists(
+            !!prompt.fewShotMessages.length,
+            `fewShotMessages: ${JSON.stringify(prompt.fewShotMessages ?? [], null, 2)}`,
+          ),
+          exists(
+            !!prompt.finalMessages.length,
+            `finalMessages: [
+              ${JSON.stringify(prompt.finalMessages ?? [], null, 2)}
+            ]`,
+          ),
+          exists(
+            !!prompt.tools.length,
+            `tools: [
     ${schemas
       .filter(({ isTool }) => isTool)
       .map(
@@ -156,8 +161,25 @@ ${variant.module === "cjs" ? "module.exports." : "export const "}${className}${v
     }`,
       )
       .join(",\n")}
-  ],
-  schema: ${prompt.schema ? camelCaseSchemaName : "undefined"},
+  ],`,
+          ),
+          exists(!!prompt.schema, `schema: ${camelCaseSchemaName}`),
+        ]
+          .filter(Boolean)
+          .map((line) => line.trim())
+          .join(",\n");
+
+        const unformattedPrompt = `${importStatements.join("\n ")}
+
+${schemas?.map(({ schema }) => schema).join("\n\n")}
+
+${variant.module === "cjs" ? "module.exports." : "export const "}${className}${variant.includeTypes ? ": EvalAnywherePrompt" : ""} = {
+  name: ${JSON.stringify(prompt.name)},
+  version: ${version},
+  model: ${JSON.stringify(prompt.model)},
+  temperature: ${JSON.stringify(prompt.temperature)},
+  systemPrompt: ${JSON.stringify(prompt.systemPrompt)},
+  ${optionalPromptProperties}
 };`;
 
         outputFiles.push({

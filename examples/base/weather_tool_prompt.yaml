@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../schemas/prompt.yaml.json
+# yaml-language-server: $schema=../../schemas/prompt.yaml.json
 
 name: Get Weather
 version: 1
@@ -9,7 +9,7 @@ tools:
   - name: get_current_weather
     description: Gets info about the current weather at a given location.
     parameters:
-      path: ./tools/get_weather.json
+      $ref: ./tools/get_weather.json
   - name: get_hurricanes
     description: Gets a list of hurricanes given a time period
     parameters: |-

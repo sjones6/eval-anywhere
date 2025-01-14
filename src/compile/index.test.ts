@@ -10,11 +10,13 @@ const baseCfg: Omit<CompileConfig, "lang"> = {
       path: "a_prompt.ts",
       prompt: {
         name: "simple prompt",
+        model: "anthropic@claude-3-5-sonnet-20241022",
+        fewShotMessages: [],
+        finalMessages: [],
         version: 0,
-        system_prompt: "system prompt",
+        systemPrompt: "system prompt",
         temperature: 0,
         tools: [],
-        schema: undefined,
         evaluation: {
           checks: [],
           evaluations: [],
@@ -25,8 +27,11 @@ const baseCfg: Omit<CompileConfig, "lang"> = {
       path: "b_prompt.ts",
       prompt: {
         name: "with tools",
+        model: "anthropic@claude-3-5-haiku-20241022",
+        fewShotMessages: [],
+        finalMessages: [],
         version: 0,
-        system_prompt: "system prompt",
+        systemPrompt: "system prompt",
         temperature: 0,
         tools: [
           {
@@ -43,7 +48,6 @@ const baseCfg: Omit<CompileConfig, "lang"> = {
             },
           },
         ],
-        schema: undefined,
         evaluation: {
           checks: [],
           evaluations: [],
@@ -54,10 +58,13 @@ const baseCfg: Omit<CompileConfig, "lang"> = {
       path: "c_prompt.ts",
       prompt: {
         name: "structured output",
+        model: "anthropic@claude-3-5-haiku-20241022",
         version: 0,
-        system_prompt: "system prompt",
+        systemPrompt: "system prompt",
         temperature: 0,
         tools: [],
+        finalMessages: [],
+        fewShotMessages: [],
         schema: {
           type: "object",
           properties: {

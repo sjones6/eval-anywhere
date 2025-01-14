@@ -1,17 +1,22 @@
 import { z } from "zod";
-import { models } from "./models";
+import { models } from "../schemas/models";
 
 export const baseCheck = z.object({
   id: z.string(),
+});
+
+export type BaseCheck = z.infer<typeof baseCheck>;
+
+export const namedCheck = z.object({
   name: z
     .string()
     .describe("An optional name describing the check.")
     .optional(),
 });
 
-export type BaseCheck = z.infer<typeof baseCheck>;
+export type NamedCheck = z.infer<typeof namedCheck>;
 
-export const profanityCheck = baseCheck
+export const profanityCheck = namedCheck
   .extend({
     id: z.literal("profanity"),
     model: models.optional(),
@@ -26,11 +31,9 @@ export const profanityCheck = baseCheck
   .strict()
   .describe("Check if profanity is included.");
 
-profanityCheck.shape.id._def.value;
-
 export type ProfanityCheck = z.infer<typeof profanityCheck>;
 
-export const alignmentCheck = baseCheck
+export const alignmentCheck = namedCheck
   .extend({
     id: z.literal("aligned"),
     model: models.optional(),
@@ -45,7 +48,7 @@ export const alignmentCheck = baseCheck
 
 export type AlignmentCheck = z.infer<typeof alignmentCheck>;
 
-export const exactMatch = baseCheck
+export const exactMatch = namedCheck
   .extend({
     id: z.literal("exact_match"),
     value: z.string().describe("The exact match to check against."),
@@ -59,7 +62,7 @@ export const exactMatch = baseCheck
 
 export type ExactMatch = z.infer<typeof exactMatch>;
 
-export const toolCallCheck = baseCheck
+export const toolCallCheck = namedCheck
   .extend({
     id: z.literal("tool_call"),
     tool_calls: z.array(
@@ -83,7 +86,7 @@ export const toolCallCheck = baseCheck
 
 export type ToolCall = z.infer<typeof toolCallCheck>;
 
-export const structuredOutputCheck = baseCheck
+export const structuredOutputCheck = namedCheck
   .extend({
     id: z.literal("structured_output"),
     result: z
@@ -107,11 +110,12 @@ export const structuredOutputCheck = baseCheck
 
 export type StructuredOutput = z.infer<typeof structuredOutputCheck>;
 
-export const customCheck = baseCheck
+export const customCheck = namedCheck
   .extend({
     model: models.optional(),
   })
-  .describe("A user-defined custom check.");
+  .describe("A user-defined custom check.")
+  .passthrough();
 
 export type CustomCheck = z.infer<typeof customCheck>;
 

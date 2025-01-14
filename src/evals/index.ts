@@ -7,15 +7,16 @@ import {
 } from "ai";
 import { loadModel } from "../utils/models";
 import { ZodSchema } from "zod";
-import { Message } from "../schemas/message";
-import { JSONValue, ResolvedPrompt } from "../utils/load";
+import { Prompt, JSONValue, Message } from "../core/types";
 import {
-  CheckResult,
   CustomCheckChatCompletion,
   EvaluationResult,
+  NamedCheckResult,
   PromptWithResults,
 } from "./types";
 import { Anywhere, AnywhereConfig } from "../core";
+import { BaseCheck } from "./schema";
+import { coreMessageToAIMessage } from "./utils";
 
 const defaultEvalModel = "openai@gpt-4o-mini";
 
@@ -23,7 +24,7 @@ export const runEvals = async ({
   prompts,
   anywhere,
 }: {
-  prompts: ResolvedPrompt[];
+  prompts: Prompt[];
   anywhere: Anywhere;
 }): Promise<PromptWithResults[]> => {
   const cfg = anywhere.config;
@@ -70,7 +71,7 @@ export const runEvals = async ({
           cfg,
           model,
           prompt,
-          checks: evalCase.checks,
+          checks: evalCase.checks ?? [],
           evalMessages: evalCase.messages,
         });
         evaluationResults.push(evaluationResult);
@@ -96,10 +97,10 @@ export const runEvals = async ({
 
 type RunEvalChecksInput = {
   cfg: AnywhereConfig;
-  checks: { id: string }[];
+  checks: BaseCheck[];
   evalMessages: Message[];
   model: LanguageModelV1;
-  prompt: ResolvedPrompt;
+  prompt: Prompt;
 };
 
 type RunEvalChecks = {
@@ -111,7 +112,7 @@ const runEvaluationChecks: RunEvalChecks = async (args) => {
   const output = await getPromptOutput(args);
   const durMs = Date.now() - start;
 
-  const results: CheckResult[] = [];
+  const results: NamedCheckResult[] = [];
 
   for (const check of args.checks) {
     const checker = args.cfg.checks.find((checker) => checker.id === check.id);
@@ -138,11 +139,17 @@ const runEvaluationChecks: RunEvalChecks = async (args) => {
     }
 
     const result = await checker.check(output, {
-      prompt: args.prompt,
       check,
+      prompt: args.prompt,
       config: args.cfg,
     });
-    results.push(result);
+    results.push({
+      ...result,
+      name:
+        "name" in check && typeof check.name === "string" && !!check.name
+          ? check.name
+          : check.id,
+    });
   }
 
   return {
@@ -163,12 +170,12 @@ const getPromptOutput = async ({
   if (prompt.schema) {
     const { object } = await generateObject({
       model,
-      system: prompt.system_prompt,
+      system: prompt.systemPrompt,
       messages: [
-        ...(prompt.few_shot_messages ?? []),
+        ...(prompt.fewShotMessages ?? []),
         ...evalMessages,
-        ...(prompt.final_messages ?? []),
-      ],
+        ...(prompt.finalMessages ?? []),
+      ].map(coreMessageToAIMessage),
       schema: jsonSchema(prompt.schema),
     });
     return {
@@ -178,12 +185,12 @@ const getPromptOutput = async ({
   }
   const { text, toolCalls } = await generateText({
     model,
-    system: prompt.system_prompt,
+    system: prompt.systemPrompt,
     messages: [
-      ...(prompt.few_shot_messages ?? []),
+      ...(prompt.fewShotMessages ?? []),
       ...evalMessages,
-      ...(prompt.final_messages ?? []),
-    ],
+      ...(prompt.finalMessages ?? []),
+    ].map(coreMessageToAIMessage),
     temperature: prompt.temperature,
     ...(prompt.tools
       ? {
@@ -209,7 +216,7 @@ const getPromptOutput = async ({
     toolCalls: toolCalls.map((toolCall) => ({
       id: toolCall.toolCallId,
       name: toolCall.toolName,
-      arguments: JSON.parse(toolCall.args),
+      arguments: toolCall.args,
     })),
   };
 };

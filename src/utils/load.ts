@@ -4,71 +4,16 @@ import fs from "node:fs";
 import z from "zod";
 
 import { parse } from "yaml";
-import { Prompt, prompt } from "../schemas/prompt";
+import { prompt } from "../schemas/prompt";
 import { globSync } from "glob";
-import { Tool } from "../schemas/tool";
 import path from "node:path";
 import {
-  AlignmentCheck,
-  BaseCheck,
-  // Check,
-  CustomCheck,
-  ExactMatch,
-  ProfanityCheck,
-  StructuredOutput,
-  ToolCall,
-} from "../schemas/check";
-import { Evaluation, EvaluationCheck } from "../schemas/evaluation";
-
-export type JSONValue =
-  | null
-  | string
-  | number
-  | boolean
-  | {
-      [value: string]: JSONValue;
-    }
-  | Array<JSONValue>;
-
-export type ResolvedStructuredOutput = Omit<StructuredOutput, "result"> & {
-  result: JSONValue;
-};
-
-export type ResolvedCheck =
-  | ResolvedStructuredOutput
-  | ProfanityCheck
-  | AlignmentCheck
-  | CustomCheck
-  | ToolCall
-  | ExactMatch;
-
-export type ResolvedEvaluationCase = Omit<EvaluationCheck, "checks"> & {
-  checks: ResolvedCheck[];
-};
-
-export type ResolvedEvaluationSuite = Omit<
-  Evaluation,
-  "checks" | "evaluations"
-> & {
-  evaluations: ResolvedEvaluationCase[];
-  checks: ResolvedCheck[];
-};
-
-export type ResolvedTool = Omit<Tool, "parameters"> & {
-  parameters: Record<string, unknown>;
-};
-
-export type ResolvedPrompt = Omit<Prompt, "tools" | "schema" | "evaluation"> & {
-  tools: ResolvedTool[];
-  schema: Record<string, unknown> | undefined;
-  evaluation: ResolvedEvaluationSuite | undefined;
-};
-
-export type ResolvedPromptWithPath = {
-  /** The absolute path to the prompt */
-  path: string;
-  prompt: ResolvedPrompt;
-};
+  PromptWithPath,
+  Message as CoreMessage,
+  JSONValue,
+} from "../core/types";
+import { Message } from "../schemas/message";
+import { EvaluationChecks, EvaluationChecksArray } from "../schemas/evaluation";
 
 const loadFileWithSchema = async <Schema extends z.ZodTypeAny>(
   file: string,
@@ -76,7 +21,7 @@ const loadFileWithSchema = async <Schema extends z.ZodTypeAny>(
 ): Promise<z.infer<Schema> | null> => {
   const contents = await fsp.readFile(file, "utf-8");
   const contentsAsYaml = parse(contents);
-  const parsedContents = schema.safeParse(contentsAsYaml);
+  const parsedContents = schema.safeParse(contentsAsYaml, {});
 
   if (!parsedContents.success) {
     console.error("prompt invalid", parsedContents.error);
@@ -101,21 +46,24 @@ const resolveJSON = ({
     if (
       typeof parameters === "object" &&
       !!parameters &&
-      "path" in parameters &&
-      typeof parameters.path === "string" &&
-      !!parameters.path &&
-      parameters.path.endsWith(".json")
+      "$ref" in parameters &&
+      typeof parameters["$ref"] === "string" &&
+      !!parameters["$ref"] &&
+      parameters["$ref"].endsWith(".json")
     ) {
       return JSON.parse(
-        fs.readFileSync(path.join(cwd, parameters.path), "utf-8").trim(),
+        fs.readFileSync(path.join(cwd, parameters["$ref"]), "utf-8").trim(),
       );
+    }
+    if (typeof parameters === "object") {
+      return parameters;
     }
     if (typeof parameters === "string") {
       return JSON.parse(parameters.trim());
     }
     return parameters;
   } catch (err) {
-    console.error("failed to load tool parameters", err);
+    console.error("failed to load value", err);
     throw err;
   }
   throw new Error("Should not hit this. This is a developer error.");
@@ -143,33 +91,63 @@ const resolveJSONSchema = ({
   throw new Error("Invalid JSON schema");
 };
 
-const isStructuredOutput = (check: BaseCheck): check is StructuredOutput =>
-  check.id === "structured_output";
-
-const resolveCheck = (
-  cwd: string,
-  check: BaseCheck | StructuredOutput,
-): ResolvedCheck => {
-  if (isStructuredOutput(check)) {
-    return {
-      ...check,
-      result: resolveJSON({
-        cwd,
-        parameters: check.result,
-      }),
-    };
+const resolveChecks = (checks: EvaluationChecks): EvaluationChecksArray => {
+  if (Array.isArray(checks)) {
+    return checks;
   }
-  return check;
+  return Object.entries(checks).map(([id, value]) => {
+    return {
+      id,
+      ...value,
+    };
+  });
 };
 
-export const loadPrompts = async ({
+const schemaMessageToCoreMessage = (message: Message): CoreMessage => {
+  if (message.role === "assistant") {
+    return {
+      role: "assistant",
+      content: message.content,
+      ...(message.tool_calls
+        ? {
+            toolCalls: message.tool_calls,
+          }
+        : {}),
+    };
+  }
+  if (message.role === "user") {
+    return {
+      role: "user",
+      content: message.content,
+      ...(message.name
+        ? {
+            name: message.name,
+          }
+        : {}),
+    };
+  }
+  if (message.role === "tool") {
+    return {
+      role: "tool",
+      toolCallId: message.toolCallId,
+      name: message.toolName,
+      result: message.result,
+      isError: message.isError,
+    };
+  }
+  throw new Error("unrecognized role");
+};
+
+export const loadPrompts = async <PromptSchema extends typeof prompt>({
   glob,
   baseDir,
+  promptSchema,
 }: {
   baseDir: string;
   glob: string;
-}): Promise<ResolvedPromptWithPath[]> => {
-  const prompts: ResolvedPromptWithPath[] = [];
+  promptSchema: PromptSchema;
+}): Promise<PromptWithPath[]> => {
+  const prompts: PromptWithPath[] = [];
 
   const files = globSync(`${baseDir}/${glob}`, {
     cwd: baseDir,
@@ -183,7 +161,7 @@ export const loadPrompts = async ({
 
   for (const file of files) {
     const absFilePath = file.fullpath();
-    const loadedPrompt = await loadFileWithSchema(absFilePath, prompt);
+    const loadedPrompt = await loadFileWithSchema(absFilePath, promptSchema);
 
     if (!loadedPrompt) {
       throw new Error(`failed to parse prompt: ${file.fullpath()}`);
@@ -193,7 +171,17 @@ export const loadPrompts = async ({
     prompts.push({
       path: absFilePath,
       prompt: {
-        ...loadedPrompt,
+        name: loadedPrompt.name,
+        model: loadedPrompt.model,
+        version: loadedPrompt.version,
+        temperature: loadedPrompt.temperature,
+        systemPrompt: loadedPrompt.system_prompt,
+        finalMessages: loadedPrompt.final_messages
+          ? loadedPrompt.final_messages.map(schemaMessageToCoreMessage)
+          : [],
+        fewShotMessages: loadedPrompt.few_shot_messages
+          ? loadedPrompt.few_shot_messages.map(schemaMessageToCoreMessage)
+          : [],
         tools: (loadedPrompt.tools ?? []).map((tool) => {
           return {
             ...tool,
@@ -203,31 +191,37 @@ export const loadPrompts = async ({
             }),
           };
         }),
-        schema: loadedPrompt.schema
-          ? resolveJSONSchema({
-              cwd,
-              parameters: loadedPrompt.schema,
-            })
-          : undefined,
-        evaluation: loadedPrompt.evaluation
+        ...(loadedPrompt.schema
           ? {
-              ...loadedPrompt.evaluation,
-              checks: (loadedPrompt.evaluation.checks ?? []).map((check) =>
-                resolveCheck(cwd, check),
-              ),
-              evaluations: loadedPrompt.evaluation.evaluations.map(
-                (evaluation) => {
-                  return {
-                    name: evaluation.name,
-                    messages: evaluation.messages,
-                    checks: (evaluation.checks ?? []).map((check) =>
-                      resolveCheck(cwd, check),
-                    ),
-                  };
-                },
-              ),
+              schema: resolveJSONSchema({
+                cwd,
+                parameters: loadedPrompt.schema,
+              }),
             }
-          : undefined,
+          : {}),
+        ...(loadedPrompt.evaluation
+          ? {
+              evaluation: {
+                ...loadedPrompt.evaluation,
+                checks: resolveChecks(loadedPrompt.evaluation.checks ?? []),
+                evaluations: loadedPrompt.evaluation.evaluations.map(
+                  (evaluation) => {
+                    return {
+                      ...(evaluation.name
+                        ? {
+                            name: evaluation.name,
+                          }
+                        : {}),
+                      messages: evaluation.messages.map(
+                        schemaMessageToCoreMessage,
+                      ),
+                      checks: resolveChecks(evaluation.checks ?? []),
+                    };
+                  },
+                ),
+              },
+            }
+          : {}),
       },
     });
   }

@@ -53,34 +53,24 @@ export const message = z.discriminatedUnion("role", [
         .describe(
           "The assumed role of the entity responsible for this message.",
         ),
-      content: z.array(
-        z.object({
-          type: z.literal("tool-result"),
-          toolCallId: z
-            .string()
-            .describe(
-              "ID of the tool call that this result is associated with.",
-            ),
-          toolName: z
-            .string()
-            .describe("Name of the tool that generated this result."),
-          result: z.union([
-            z.object({}),
-            z.boolean(),
-            z.string(),
-            z.number(),
-            z.null(),
-          ]),
-          isError: z
-            .boolean()
-            .describe(
-              "Optional flag if the result is an error or an error message.",
-            ),
-        }),
-      ),
-      tool_call_id: z
+      toolCallId: z
         .string()
-        .describe("The ID of the tool call. Must match an actual tool call."),
+        .describe("ID of the tool call that this result is associated with."),
+      toolName: z
+        .string()
+        .describe("Name of the tool that generated this result."),
+      result: z.union([
+        z.object({}),
+        z.boolean(),
+        z.string(),
+        z.number(),
+        z.null(),
+      ]),
+      isError: z
+        .boolean()
+        .describe(
+          "Optional flag if the result is an error or an error message.",
+        ),
     })
     .strict(),
 ]);

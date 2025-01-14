@@ -1,4 +1,4 @@
-import { ResolvedPromptWithPath } from "../utils/load";
+import { PromptWithPath } from "../core/types";
 
 export type Lang = string;
 
@@ -16,7 +16,7 @@ export type CompileConfig = {
   outDir: string;
   packageDir: string;
   lang: Lang;
-  prompts: ResolvedPromptWithPath[];
+  prompts: PromptWithPath[];
 };
 
 export type OutputFile = {

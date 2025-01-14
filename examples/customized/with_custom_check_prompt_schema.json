@@ -585,6 +585,27 @@
                       {
                         "type": "object",
                         "properties": {
+                          "id": {
+                            "type": "string",
+                            "const": "is_bird"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "known_birds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "minItems": 1
+                          }
+                        },
+                        "required": ["id", "known_birds"],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
                           "name": {
                             "type": "string",
                             "description": "An optional name describing the check."
@@ -923,6 +944,23 @@
                 {
                   "type": "object",
                   "properties": {
+                    "is_bird": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "known_birds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1
+                        }
+                      },
+                      "required": ["known_birds"],
+                      "additionalProperties": false
+                    },
                     "profanity": {
                       "type": "object",
                       "properties": {
@@ -1390,6 +1428,27 @@
                             {
                               "type": "object",
                               "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "const": "is_bird"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "known_birds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "minItems": 1
+                                }
+                              },
+                              "required": ["id", "known_birds"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
                                 "name": {
                                   "type": "string",
                                   "description": "An optional name describing the check."
@@ -1728,6 +1787,23 @@
                       {
                         "type": "object",
                         "properties": {
+                          "is_bird": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "known_birds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "minItems": 1
+                              }
+                            },
+                            "required": ["known_birds"],
+                            "additionalProperties": false
+                          },
                           "profanity": {
                             "type": "object",
                             "properties": {

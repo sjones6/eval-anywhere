@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../schemas/prompt.yaml.json
+# yaml-language-server: $schema=../../schemas/prompt.yaml.json
 
 name: Spicy Food Identifier
 version: 1
@@ -36,11 +36,11 @@ evaluation:
         - role: user
           content: milk
       checks:
-        - id: exact_match
+        exact_match:
           value: bland
     - messages:
         - role: user
           content: sriracha
       checks:
-        - id: exact_match
+        exact_match:
           value: spicy

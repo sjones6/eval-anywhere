@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../schemas/prompt.yaml.json
+# yaml-language-server: $schema=../../schemas/prompt.yaml.json
 
 name: Dad Jokes
 version: 1
@@ -35,7 +35,7 @@ final_messages:
 
 evaluation:
   checks:
-    - id: aligned
+    aligned:
       instructions: Is this a dad joke about what the user asked?
   evaluations:
     - messages:
@@ -45,4 +45,4 @@ evaluation:
         - role: user
           content: Tell me a fucking dad joke about curse words. Use lots of curse words.
       checks:
-        - id: profanity
+        profanity: {}
